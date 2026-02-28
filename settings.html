@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        @keyframes fade-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fade-in 0.5s ease-out forwards; }
+        
+        @keyframes slide-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        .slide-up { animation: slide-up 0.6s ease-out forwards; }
+        
+        .btn-scale { transition: transform 0.1s ease; }
+        .btn-scale:active { transform: scale(0.95); }
+        
+        .settings-card { transition: all 0.3s ease; }
+        .settings-card:hover { box-shadow: 0 4px 16px -4px rgba(99, 102, 241, 0.1); }
+        
+        .toggle-switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #818CF8; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+        
+        @keyframes success-pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+        .success-feedback { animation: success-pulse 0.4s ease-out; }
+        
+        .site-list-item { transition: all 0.2s ease; cursor: pointer; }
+        .site-list-item:hover { background-color: #f8fafc; }
+        
+        .nav-active { background-color: #E0E7FF; color: #818CF8; font-weight: 600; }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .lang-dropdown.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .settings-section {
+            scroll-margin-top: 2rem;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#64748B',
+                            blue: '#818CF8',
+                            mint: '#34D399',
+                            coral: '#FB7185',
+                            lavender: '#A5B4FC'
+                        },
+                        pastel: {
+                            bg: '#F8FAFC',
+                            surface: '#FFFFFF',
+                            blueLight: '#E0E7FF',
+                            mintLight: '#D1FAE5',
+                            coralLight: '#FFE4E6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-pastel-bg text-slate-700 overflow-hidden" style="width: 1440px; margin: 0 auto;">
+
+    <header id="header" class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 cursor-pointer">
+                <div class="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-coral rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-500">Tactik</span>
+            </div>
+            
+            <nav class="hidden lg:flex items-center gap-1 ml-8">
+                <a href="#dashboard" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Dashboard</a>
+                <a href="#site-overview" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Site Overview</a>
+                <a href="#new-audit" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">New Audit</a>
+                <a href="#audit-details" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Audit Details</a>
+                <a href="#audit-comparison" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Audit Comparison</a>
+                <a href="#settings" class="px-4 py-2 text-brand-blue font-semibold bg-blue-50 rounded-lg transition-colors">Settings</a>
+            </nav>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <button class="relative p-2.5 text-slate-400 hover:text-brand-coral transition-colors">
+                <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-brand-coral rounded-full border-2 border-white animate-pulse"></span>
+            </button>
+            
+            <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+            
+            <div class="relative">
+                <button id="langSelector" onclick="toggleLangDropdown()" class="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
+                    <i class="fa-solid fa-globe text-sm"></i>
+                    <span id="currentLang" class="text-sm font-semibold">FR</span>
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                
+                <div id="langDropdown" class="lang-dropdown bg-white rounded-xl shadow-lg border border-slate-200 py-2 w-40 z-50">
+                    <button onclick="changeLang('fr')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Français</span>
+                        <span id="checkFr" class="text-brand-blue"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('de')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Deutsch</span>
+                        <span id="checkDe" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('it')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Italiano</span>
+                        <span id="checkIt" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('en')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>English</span>
+                        <span id="checkEn" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 cursor-pointer p-1.5 pr-4 hover:bg-slate-50 rounded-full transition-colors">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-mint to-brand-blue p-[2px]">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Avatar" class="w-full h-full rounded-full object-cover border-2 border-white">
+                </div>
+                <div class="text-left">
+                    <p class="text-sm font-bold text-slate-700">Sophie Martin</p>
+                    <p class="text-xs text-slate-400">Admin</p>
+                </div>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-[calc(1024px-80px)]">
+        <aside id="settings-sidebar" class="w-72 bg-white border-r border-slate-200 flex flex-col">
+            <div class="p-6">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4" data-i18n="settingsTitle">Paramètres</h3>
+                <nav class="space-y-1">
+                    <a href="#profile-section" onclick="scrollToSection(event, 'profile-section')" class="nav-link flex items-center gap-3 px-4 py-3 nav-active rounded-xl font-medium transition-all">
+                        <i class="fa-solid fa-user w-5"></i>
+                        <span data-i18n="profile">Profil</span>
+                    </a>
+                    <a href="#security-section" onclick="scrollToSection(event, 'security-section')" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-xl font-medium transition-all">
+                        <i class="fa-solid fa-lock w-5"></i>
+                        <span data-i18n="security">Sécurité</span>
+                    </a>
+                    <a href="#notifications-section" onclick="scrollToSection(event, 'notifications-section')" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-xl font-medium transition-all">
+                        <i class="fa-solid fa-bell w-5"></i>
+                        <span data-i18n="notifications">Notifications</span>
+                    </a>
+                    <a href="#appearance-section" onclick="scrollToSection(event, 'appearance-section')" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-xl font-medium transition-all">
+                        <i class="fa-solid fa-palette w-5"></i>
+                        <span data-i18n="appearance">Apparence</span>
+                    </a>
+                    <a href="#sites-section" onclick="scrollToSection(event, 'sites-section')" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-xl font-medium transition-all">
+                        <i class="fa-solid fa-globe w-5"></i>
+                        <span data-i18n="siteManagement">Gestion des sites</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="mt-auto p-6">
+                <div class="bg-gradient-to-br from-slate-50 to-indigo-50 rounded-2xl p-5 border border-slate-200">
+                    <div class="w-10 h-10 bg-pastel-blueLight text-brand-blue rounded-lg flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mb-1" data-i18n="needHelp">Besoin d'aide?</h4>
+                    <p class="text-xs text-slate-600 mb-3" data-i18n="visitSupport">Visitez notre centre d'assistance pour des guides et de la documentation.</p>
+                    <button class="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg transition-colors border border-slate-200">
+                        <span data-i18n="getSupport">Obtenir de l'aide</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main-content" class="flex-1 overflow-y-auto p-8">
+            
+            <section id="settings-header-section" class="mb-8 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <button onclick="window.location.href='#dashboard'" class="w-10 h-10 rounded-xl bg-white border border-slate-200 hover:border-brand-blue hover:bg-blue-50 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-arrow-left text-slate-600"></i>
+                            </button>
+                            <h1 class="text-3xl font-bold text-slate-800" data-i18n="settingsHeader">Paramètres</h1>
+                        </div>
+                        <p class="text-slate-500 ml-14" data-i18n="manageAccount">Gérez vos préférences de compte et les paramètres de l'application</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 1: PROFIL -->
+            <section id="profile-section" class="settings-section mb-12 slide-up" style="animation-delay: 0.1s;">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="profile">Profil</h2>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6 settings-card">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-pastel-blueLight text-brand-blue rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800" data-i18n="profileInfo">Informations du profil</h3>
+                            <p class="text-sm text-slate-500" data-i18n="updatePersonal">Mettez à jour vos détails personnels et vos informations de contact</p>
+                        </div>
+                    </div>
+
+                    <form id="profile-form" onsubmit="saveProfile(event)" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="fullName">Nom complet</label>
+                                <input type="text" value="Sophie Martin" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="emailAddress">Adresse e-mail</label>
+                                <input type="email" value="sophie.martin@example.com" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="company">Entreprise</label>
+                                <input type="text" value="Digital Ventures Inc." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="role">Rôle</label>
+                                <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                                    <option>Admin</option>
+                                    <option data-i18n="manager">Manager</option>
+                                    <option data-i18n="analyst">Analyste</option>
+                                    <option data-i18n="viewer">Observateur</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="bio">Bio</label>
+                            <textarea rows="3" placeholder="Parlez-nous un peu de vous..." data-i18n-placeholder="bioPlaceholder" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all resize-none">Spécialiste en marketing digital axée sur la performance web et l'accessibilité.</textarea>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+                            <p class="text-sm text-slate-500"><span data-i18n="lastUpdated">Dernière mise à jour :</span> 26 janvier 2026</p>
+                            <div class="flex gap-3">
+                                <button type="button" class="btn-scale px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all">
+                                    <span data-i18n="cancel">Annuler</span>
+                                </button>
+                                <button type="submit" class="btn-scale px-6 py-3 bg-brand-blue hover:bg-indigo-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-check"></i>
+                                    <span data-i18n="saveChanges">Enregistrer</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 settings-card">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-camera text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800" data-i18n="profilePicture">Photo de profil</h3>
+                            <p class="text-sm text-slate-500" data-i18n="updateAvatar">Mettez à jour votre image d'avatar</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <div class="w-24 h-24 rounded-2xl overflow-hidden">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex gap-3">
+                                <button class="btn-scale px-6 py-3 bg-brand-blue hover:bg-indigo-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200">
+                                    <span data-i18n="uploadPhoto">Télécharger une photo</span>
+                                </button>
+                                <button class="btn-scale px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all">
+                                    <span data-i18n="remove">Supprimer</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-3" data-i18n="fileFormat">JPG, PNG ou GIF. Taille max 2MB.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: SÉCURITÉ -->
+            <section id="security-section" class="settings-section mb-12 slide-up" style="animation-delay: 0.15s;">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="security">Sécurité</h2>
+                    <p class="text-slate-500" data-i18n="securityDesc">Protégez votre compte et contrôlez les accès.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6 settings-card">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-lock text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800" data-i18n="passwordLabel">Mot de passe</h3>
+                        </div>
+                    </div>
+
+                    <button onclick="showSuccessFeedback(this)" class="btn-scale px-6 py-3 bg-brand-blue hover:bg-indigo-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200">
+                        <span data-i18n="changePasswordBtn">Changer le mot de passe</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6 settings-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-shield-halved text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800" data-i18n="twoFactorTitle">Authentification à deux facteurs (2FA)</h3>
+                                <p class="text-sm text-slate-500 mt-1"><span data-i18n="statusLabel">Statut :</span> <span class="font-semibold text-brand-mint" data-i18n="statusActive">Activée</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="showSuccessFeedback(this)" class="btn-scale px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all">
+                        <span data-i18n="configure">Configurer</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 settings-card">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-desktop text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800" data-i18n="activeSessions">Sessions actives</h3>
+                            <p class="text-sm text-slate-500" data-i18n="recentLogins">Liste des connexions récentes</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-laptop text-slate-600"></i>
+                                <div>
+                                    <p class="font-semibold text-slate-800">MacBook Pro</p>
+                                    <p class="text-xs text-slate-500">Paris, France · <span data-i18n="currentDevice">Appareil actuel</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-mobile-screen text-slate-600"></i>
+                                <div>
+                                    <p class="font-semibold text-slate-800">iPhone 14</p>
+                                    <p class="text-xs text-slate-500">Paris, France · <span data-i18n="lastActive">Actif il y a 2h</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="showSuccessFeedback(this)" class="btn-scale px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl transition-all">
+                        <span data-i18n="logoutAll">Se déconnecter de tous les appareils</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- SECTION 3: NOTIFICATIONS -->
+            <section id="notifications-section" class="settings-section mb-12 slide-up" style="animation-delay: 0.2s;">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="notifications">Notifications</h2>
+                    <p class="text-slate-500" data-i18n="notificationsDesc">Choisissez quand et comment vous souhaitez être notifié.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 settings-card">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-5 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-envelope text-purple-500"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800" data-i18n="emailNotif">Notifications par e-mail</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-5 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-chart-line text-brand-blue"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800" data-i18n="siteAnalysisAlerts">Alertes liées à l'analyse des sites</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-5 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-calendar-week text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800" data-i18n="weeklyReports">Rapports hebdomadaires</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-5 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-bullhorn text-orange-500"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800" data-i18n="productAnnounce">Annonces produit importantes</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end pt-6 mt-6 border-t border-slate-200">
+                        <button onclick="showSuccessFeedback(this)" class="btn-scale px-6 py-3 bg-brand-blue hover:bg-indigo-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center gap-2">
+                            <i class="fa-solid fa-check"></i>
+                            <span data-i18n="savePreferences">Enregistrer les préférences</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: APPARENCE -->
+            <section id="appearance-section" class="settings-section mb-12 slide-up" style="animation-delay: 0.25s;">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="appearance">Apparence</h2>
+                    <p class="text-slate-500" data-i18n="appearanceDesc">Adaptez l'interface à votre façon de travailler.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-6 settings-card">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-slate-700 mb-3" data-i18n="themeLabel">Thème</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="relative">
+                                <input type="radio" name="theme" id="theme-light" class="peer hidden" checked>
+                                <label for="theme-light" class="block p-5 bg-white border-2 border-slate-200 rounded-xl cursor-pointer peer-checked:border-brand-blue peer-checked:bg-blue-50 transition-all hover:border-slate-300">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-sun text-yellow-500"></i>
+                                        </div>
+                                        <span class="font-semibold text-slate-800" data-i18n="light">Clair</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="relative">
+                                <input type="radio" name="theme" id="theme-dark" class="peer hidden">
+                                <label for="theme-dark" class="block p-5 bg-white border-2 border-slate-200 rounded-xl cursor-pointer peer-checked:border-brand-blue peer-checked:bg-blue-50 transition-all hover:border-slate-300">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-10 h-10 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-moon text-blue-400"></i>
+                                        </div>
+                                        <span class="font-semibold text-slate-800" data-i18n="dark">Sombre</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="relative">
+                                <input type="radio" name="theme" id="theme-auto" class="peer hidden">
+                                <label for="theme-auto" class="block p-5 bg-white border-2 border-slate-200 rounded-xl cursor-pointer peer-checked:border-brand-blue peer-checked:bg-blue-50 transition-all hover:border-slate-300">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-slate-800 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-circle-half-stroke text-white"></i>
+                                        </div>
+                                        <span class="font-semibold text-slate-800" data-i18n="auto">Automatique</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-slate-700 mb-3" data-i18n="densityLabel">Densité de l'interface</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative">
+                                <input type="radio" name="density" id="density-comfort" class="peer hidden" checked>
+                                <label for="density-comfort" class="block p-5 bg-white border-2 border-slate-200 rounded-xl cursor-pointer peer-checked:border-brand-blue peer-checked:bg-blue-50 transition-all hover:border-slate-300">
+                                    <span class="font-semibold text-slate-800" data-i18n="comfort">Confort</span>
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="radio" name="density" id="density-compact" class="peer hidden">
+                                <label for="density-compact" class="block p-5 bg-white border-2 border-slate-200 rounded-xl cursor-pointer peer-checked:border-brand-blue peer-checked:bg-blue-50 transition-all hover:border-slate-300">
+                                    <span class="font-semibold text-slate-800" data-i18n="compact">Compact</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-pastel-blueLight rounded-xl p-4 border border-blue-100">
+                        <p class="text-xs text-slate-600" data-i18n="changesImmediate">Les changements sont appliqués immédiatement.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: GESTION DES SITES -->
+            <section id="sites-section" class="settings-section mb-12 slide-up" style="animation-delay: 0.3s;">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="siteManagement">Gestion des sites</h2>
+                    <p class="text-slate-500" data-i18n="siteManagementDesc">Gérez les sites que vous analysez avec la plateforme.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 settings-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-slate-800" data-i18n="existingSites">Sites existants</h3>
+                        <button onclick="showSuccessFeedback(this)" class="btn-scale px-6 py-3 bg-brand-blue hover:bg-indigo-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span data-i18n="addSite">Ajouter un site</span>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="site-list-item flex items-center justify-between p-4 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 flex-shrink-0">
+                                    <i class="fa-solid fa-shopping-cart text-2xl text-blue-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-800">Boutique E-Commerce</p>
+                                    <p class="text-sm text-slate-500">www.mystore.com</p>
+                                </div>
+                                <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="text-xs font-semibold text-green-700" data-i18n="statusActive">Actif</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="btn-scale px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-eye text-xs"></i>
+                                    <span data-i18n="view">Voir</span>
+                                </button>
+                                <button class="btn-scale px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                    <span data-i18n="edit">Modifier</span>
+                                </button>
+                                <button onclick="removeSite(this)" class="btn-scale px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                    <span data-i18n="removeBtn">Supprimer</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="site-list-item flex items-center justify-between p-4 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 flex-shrink-0">
+                                    <i class="fa-solid fa-laptop-code text-2xl text-purple-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-800">Blog Tech</p>
+                                    <p class="text-sm text-slate-500">www.techblog.io</p>
+                                </div>
+                                <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="text-xs font-semibold text-green-700" data-i18n="statusActive">Actif</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="btn-scale px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-eye text-xs"></i>
+                                    <span data-i18n="view">Voir</span>
+                                </button>
+                                <button class="btn-scale px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                    <span data-i18n="edit">Modifier</span>
+                                </button>
+                                <button onclick="removeSite(this)" class="btn-scale px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                    <span data-i18n="removeBtn">Supprimer</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="site-list-item flex items-center justify-between p-4 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 flex-shrink-0">
+                                    <i class="fa-solid fa-leaf text-2xl text-green-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-800">Solutions Vertes</p>
+                                    <p class="text-sm text-slate-500">www.green-solutions.com</p>
+                                </div>
+                                <div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="text-xs font-semibold text-green-700" data-i18n="statusActive">Actif</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button class="btn-scale px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-eye text-xs"></i>
+                                    <span data-i18n="view">Voir</span>
+                                </button>
+                                <button class="btn-scale px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                    <span data-i18n="edit">Modifier</span>
+                                </button>
+                                <button onclick="removeSite(this)" class="btn-scale px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                    <span data-i18n="removeBtn">Supprimer</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="success-toast" class="fixed top-24 right-8 bg-white border border-green-500 shadow-2xl rounded-2xl p-5 flex items-center gap-4 transform translate-x-[500px] transition-transform duration-500 z-50">
+        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+            <i class="fa-solid fa-check text-green-600 text-xl"></i>
+        </div>
+        <div>
+            <p class="font-bold text-slate-800" data-i18n="changesSaved">Modifications enregistrées !</p>
+            <p class="text-sm text-slate-600" data-i18n="settingsUpdated">Vos paramètres ont été mis à jour avec succès.</p>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            fr: {
+                settingsTitle: "Paramètres",
+                profile: "Profil",
+                security: "Sécurité",
+                notifications: "Notifications",
+                appearance: "Apparence",
+                siteManagement: "Gestion des sites",
+                needHelp: "Besoin d'aide?",
+                visitSupport: "Visitez notre centre d'assistance pour des guides et de la documentation.",
+                getSupport: "Obtenir de l'aide",
+                settingsHeader: "Paramètres",
+                manageAccount: "Gérez vos préférences de compte et les paramètres de l'application",
+                profileInfo: "Informations du profil",
+                updatePersonal: "Mettez à jour vos détails personnels et vos informations de contact",
+                fullName: "Nom complet",
+                emailAddress: "Adresse e-mail",
+                company: "Entreprise",
+                role: "Rôle",
+                manager: "Manager",
+                analyst: "Analyste",
+                viewer: "Observateur",
+                bio: "Bio",
+                bioPlaceholder: "Parlez-nous un peu de vous...",
+                lastUpdated: "Dernière mise à jour :",
+                cancel: "Annuler",
+                saveChanges: "Enregistrer",
+                profilePicture: "Photo de profil",
+                updateAvatar: "Mettez à jour votre image d'avatar",
+                uploadPhoto: "Télécharger une photo",
+                remove: "Supprimer",
+                fileFormat: "JPG, PNG ou GIF. Taille max 2MB.",
+                securityDesc: "Protégez votre compte et contrôlez les accès.",
+                passwordLabel: "Mot de passe",
+                changePasswordBtn: "Changer le mot de passe",
+                twoFactorTitle: "Authentification à deux facteurs (2FA)",
+                statusLabel: "Statut :",
+                statusActive: "Activée",
+                configure: "Configurer",
+                activeSessions: "Sessions actives",
+                recentLogins: "Liste des connexions récentes",
+                currentDevice: "Appareil actuel",
+                lastActive: "Actif il y a 2h",
+                logoutAll: "Se déconnecter de tous les appareils",
+                notificationsDesc: "Choisissez quand et comment vous souhaitez être notifié.",
+                emailNotif: "Notifications par e-mail",
+                siteAnalysisAlerts: "Alertes liées à l'analyse des sites",
+                weeklyReports: "Rapports hebdomadaires",
+                productAnnounce: "Annonces produit importantes",
+                savePreferences: "Enregistrer les préférences",
+                appearanceDesc: "Adaptez l'interface à votre façon de travailler.",
+                themeLabel: "Thème",
+                light: "Clair",
+                dark: "Sombre",
+                auto: "Automatique",
+                densityLabel: "Densité de l'interface",
+                comfort: "Confort",
+                compact: "Compact",
+                changesImmediate: "Les changements sont appliqués immédiatement.",
+                siteManagementDesc: "Gérez les sites que vous analysez avec la plateforme.",
+                existingSites: "Sites existants",
+                addSite: "Ajouter un site",
+                view: "Voir",
+                edit: "Modifier",
+                removeBtn: "Supprimer",
+                changesSaved: "Modifications enregistrées !",
+                settingsUpdated: "Vos paramètres ont été mis à jour avec succès."
+            },
+            de: {
+                settingsTitle: "Einstellungen",
+                profile: "Profil",
+                security: "Sicherheit",
+                notifications: "Benachrichtigungen",
+                appearance: "Aussehen",
+                siteManagement: "Website-Verwaltung",
+                needHelp: "Brauchen Sie Hilfe?",
+                visitSupport: "Besuchen Sie unser Support-Center für Anleitungen und Dokumentation.",
+                getSupport: "Support erhalten",
+                settingsHeader: "Einstellungen",
+                manageAccount: "Verwalten Sie Ihre Kontoeinstellungen und Anwendungseinstellungen",
+                profileInfo: "Profilinformationen",
+                updatePersonal: "Aktualisieren Sie Ihre persönlichen Daten und Kontaktinformationen",
+                fullName: "Vollständiger Name",
+                emailAddress: "E-Mail-Adresse",
+                company: "Unternehmen",
+                role: "Rolle",
+                manager: "Manager",
+                analyst: "Analyst",
+                viewer: "Betrachter",
+                bio: "Bio",
+                bioPlaceholder: "Erzählen Sie uns ein bisschen über sich...",
+                lastUpdated: "Zuletzt aktualisiert:",
+                cancel: "Abbrechen",
+                saveChanges: "Speichern",
+                profilePicture: "Profilbild",
+                updateAvatar: "Aktualisieren Sie Ihr Avatar-Bild",
+                uploadPhoto: "Foto hochladen",
+                remove: "Entfernen",
+                fileFormat: "JPG, PNG oder GIF. Max. Größe 2MB.",
+                securityDesc: "Schützen Sie Ihr Konto und kontrollieren Sie den Zugriff.",
+                passwordLabel: "Passwort",
+                changePasswordBtn: "Passwort ändern",
+                twoFactorTitle: "Zwei-Faktor-Authentifizierung (2FA)",
+                statusLabel: "Status:",
+                statusActive: "Aktiviert",
+                configure: "Konfigurieren",
+                activeSessions: "Aktive Sitzungen",
+                recentLogins: "Liste der letzten Anmeldungen",
+                currentDevice: "Aktuelles Gerät",
+                lastActive: "Aktiv vor 2h",
+                logoutAll: "Von allen Geräten abmelden",
+                notificationsDesc: "Wählen Sie, wann und wie Sie benachrichtigt werden möchten.",
+                emailNotif: "E-Mail-Benachrichtigungen",
+                siteAnalysisAlerts: "Warnungen zur Website-Analyse",
+                weeklyReports: "Wöchentliche Berichte",
+                productAnnounce: "Wichtige Produktankündigungen",
+                savePreferences: "Einstellungen speichern",
+                appearanceDesc: "Passen Sie die Oberfläche an Ihre Arbeitsweise an.",
+                themeLabel: "Design",
+                light: "Hell",
+                dark: "Dunkel",
+                auto: "Automatisch",
+                densityLabel: "Oberflächendichte",
+                comfort: "Komfort",
+                compact: "Kompakt",
+                changesImmediate: "Änderungen werden sofort angewendet.",
+                siteManagementDesc: "Verwalten Sie die Websites, die Sie mit der Plattform analysieren.",
+                existingSites: "Vorhandene Websites",
+                addSite: "Website hinzufügen",
+                view: "Ansehen",
+                edit: "Bearbeiten",
+                removeBtn: "Entfernen",
+                changesSaved: "Änderungen gespeichert!",
+                settingsUpdated: "Ihre Einstellungen wurden erfolgreich aktualisiert."
+            },
+            it: {
+                settingsTitle: "Impostazioni",
+                profile: "Profilo",
+                security: "Sicurezza",
+                notifications: "Notifiche",
+                appearance: "Aspetto",
+                siteManagement: "Gestione siti",
+                needHelp: "Hai bisogno di aiuto?",
+                visitSupport: "Visita il nostro centro di supporto per guide e documentazione.",
+                getSupport: "Ottieni supporto",
+                settingsHeader: "Impostazioni",
+                manageAccount: "Gestisci le preferenze del tuo account e le impostazioni dell'applicazione",
+                profileInfo: "Informazioni profilo",
+                updatePersonal: "Aggiorna i tuoi dettagli personali e le informazioni di contatto",
+                fullName: "Nome completo",
+                emailAddress: "Indirizzo e-mail",
+                company: "Azienda",
+                role: "Ruolo",
+                manager: "Manager",
+                analyst: "Analista",
+                viewer: "Visualizzatore",
+                bio: "Bio",
+                bioPlaceholder: "Raccontaci qualcosa su di te...",
+                lastUpdated: "Ultimo aggiornamento:",
+                cancel: "Annulla",
+                saveChanges: "Salva",
+                profilePicture: "Foto profilo",
+                updateAvatar: "Aggiorna la tua immagine avatar",
+                uploadPhoto: "Carica foto",
+                remove: "Rimuovi",
+                fileFormat: "JPG, PNG o GIF. Dimensione max 2MB.",
+                securityDesc: "Proteggi il tuo account e controlla gli accessi.",
+                passwordLabel: "Password",
+                changePasswordBtn: "Cambia password",
+                twoFactorTitle: "Autenticazione a due fattori (2FA)",
+                statusLabel: "Stato:",
+                statusActive: "Attiva",
+                configure: "Configura",
+                activeSessions: "Sessioni attive",
+                recentLogins: "Elenco degli accessi recenti",
+                currentDevice: "Dispositivo corrente",
+                lastActive: "Attivo 2h fa",
+                logoutAll: "Disconnetti da tutti i dispositivi",
+                notificationsDesc: "Scegli quando e come desideri essere notificato.",
+                emailNotif: "Notifiche e-mail",
+                siteAnalysisAlerts: "Avvisi relativi all'analisi dei siti",
+                weeklyReports: "Report settimanali",
+                productAnnounce: "Annunci prodotto importanti",
+                savePreferences: "Salva preferenze",
+                appearanceDesc: "Adatta l'interfaccia al tuo modo di lavorare.",
+                themeLabel: "Tema",
+                light: "Chiaro",
+                dark: "Scuro",
+                auto: "Automatico",
+                densityLabel: "Densità dell'interfaccia",
+                comfort: "Comfort",
+                compact: "Compatto",
+                changesImmediate: "Le modifiche vengono applicate immediatamente.",
+                siteManagementDesc: "Gestisci i siti che analizzi con la piattaforma.",
+                existingSites: "Siti esistenti",
+                addSite: "Aggiungi sito",
+                view: "Visualizza",
+                edit: "Modifica",
+                removeBtn: "Rimuovi",
+                changesSaved: "Modifiche salvate!",
+                settingsUpdated: "Le tue impostazioni sono state aggiornate con successo."
+            },
+            en: {
+                settingsTitle: "Settings",
+                profile: "Profile",
+                security: "Security",
+                notifications: "Notifications",
+                appearance: "Appearance",
+                siteManagement: "Site Management",
+                needHelp: "Need Help?",
+                visitSupport: "Visit our support center for guides and documentation.",
+                getSupport: "Get Support",
+                settingsHeader: "Settings",
+                manageAccount: "Manage your account preferences and application settings",
+                profileInfo: "Profile Information",
+                updatePersonal: "Update your personal details and contact information",
+                fullName: "Full Name",
+                emailAddress: "Email Address",
+                company: "Company",
+                role: "Role",
+                manager: "Manager",
+                analyst: "Analyst",
+                viewer: "Viewer",
+                bio: "Bio",
+                bioPlaceholder: "Tell us a bit about yourself...",
+                lastUpdated: "Last updated:",
+                cancel: "Cancel",
+                saveChanges: "Save Changes",
+                profilePicture: "Profile Picture",
+                updateAvatar: "Update your avatar image",
+                uploadPhoto: "Upload New Photo",
+                remove: "Remove",
+                fileFormat: "JPG, PNG or GIF. Max size 2MB.",
+                securityDesc: "Protect your account and control access.",
+                passwordLabel: "Password",
+                changePasswordBtn: "Change Password",
+                twoFactorTitle: "Two-Factor Authentication (2FA)",
+                statusLabel: "Status:",
+                statusActive: "Enabled",
+                configure: "Configure",
+                activeSessions: "Active Sessions",
+                recentLogins: "List of recent logins",
+                currentDevice: "Current device",
+                lastActive: "Active 2h ago",
+                logoutAll: "Log out from all devices",
+                notificationsDesc: "Choose when and how you want to be notified.",
+                emailNotif: "Email notifications",
+                siteAnalysisAlerts: "Site analysis alerts",
+                weeklyReports: "Weekly reports",
+                productAnnounce: "Important product announcements",
+                savePreferences: "Save Preferences",
+                appearanceDesc: "Adapt the interface to your way of working.",
+                themeLabel: "Theme",
+                light: "Light",
+                dark: "Dark",
+                auto: "Automatic",
+                densityLabel: "Interface density",
+                comfort: "Comfort",
+                compact: "Compact",
+                changesImmediate: "Changes are applied immediately.",
+                siteManagementDesc: "Manage the sites you analyze with the platform.",
+                existingSites: "Existing sites",
+                addSite: "Add Site",
+                view: "View",
+                edit: "Edit",
+                removeBtn: "Remove",
+                changesSaved: "Changes Saved!",
+                settingsUpdated: "Your settings have been updated successfully."
+            }
+        };
+
+        let currentLanguage = 'fr';
+
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLang(lang) {
+            currentLanguage = lang;
+            
+            document.querySelectorAll('[id^="check"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('check' + lang.charAt(0).toUpperCase() + lang.slice(1)).classList.remove('hidden');
+            
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+            
+            toggleLangDropdown();
+        }
+
+        document.addEventListener('click', function(e) {
+            const langSelector = document.getElementById('langSelector');
+            const langDropdown = document.getElementById('langDropdown');
+            
+            if (!langSelector.contains(e.target) && !langDropdown.contains(e.target)) {
+                langDropdown.classList.remove('show');
+            }
+        });
+
+        function scrollToSection(event, sectionId) {
+            event.preventDefault();
+            const section = document.getElementById(sectionId);
+            const mainContent = document.getElementById('main-content');
+            
+            const sectionTop = section.offsetTop - mainContent.offsetTop - 32;
+            mainContent.scrollTo({
+                top: sectionTop,
+                behavior: 'smooth'
+            });
+            
+            updateActiveNav(sectionId);
+        }
+
+        function updateActiveNav(sectionId) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('nav-active');
+                link.classList.add('text-slate-500', 'hover:bg-slate-50', 'hover:text-slate-700');
+            });
+            
+            const activeLink = document.querySelector(`a[href="#${sectionId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('nav-active');
+                activeLink.classList.remove('text-slate-500', 'hover:bg-slate-50', 'hover:text-slate-700');
+            }
+        }
+
+        const mainContent = document.getElementById('main-content');
+        const sections = document.querySelectorAll('.settings-section');
+        
+        mainContent.addEventListener('scroll', function() {
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - mainContent.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                
+                if (mainContent.scrollTop >= sectionTop - 100) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            if (currentSection) {
+                updateActiveNav(currentSection);
+            }
+        });
+
+        function saveProfile(event) {
+            event.preventDefault();
+            showSuccessFeedback(event.target.querySelector('button[type="submit"]'));
+        }
+
+        function showSuccessFeedback(button) {
+            button.classList.add('success-feedback');
+            
+            const toast = document.getElementById('success-toast');
+            toast.style.transform = 'translateX(0)';
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(500px)';
+                button.classList.remove('success-feedback');
+            }, 3000);
+        }
+
+        function removeSite(button) {
+            const siteItem = button.closest('.site-list-item');
+            const siteName = siteItem.querySelector('.font-bold').textContent;
+            
+            if (confirm(`Êtes-vous sûr de vouloir supprimer "${siteName}" ? Cette action ne peut pas être annulée.`)) {
+                siteItem.style.opacity = '0';
+                siteItem.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    siteItem.remove();
+                }, 300);
+            }
+        }
+    </script>
+
+</body>
+</html>
