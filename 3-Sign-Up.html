@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign-Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { display: none;}
+        
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        @keyframes pulse-soft { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        .animate-pulse-soft { animation: pulse-soft 4s ease-in-out infinite; }
+        
+        @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slide-up 0.8s ease-out forwards; }
+        
+        @keyframes button-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        .btn-submit-animate { animation: button-pulse 0.3s ease-out; }
+        
+        .btn-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-hover:hover { transform: translateY(-2px); }
+        
+        .input-focus { transition: all 0.2s ease; }
+        .input-focus:focus { transform: translateY(-1px); }
+        
+        .gradient-text { background: linear-gradient(135deg, #818CF8 0%, #FB7185 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .lang-dropdown.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#64748B',
+                            blue: '#818CF8',
+                            mint: '#34D399',
+                            coral: '#FB7185',
+                            lavender: '#A5B4FC'
+                        },
+                        pastel: {
+                            bg: '#F8FAFC',
+                            surface: '#FFFFFF',
+                            blueLight: '#E0E7FF',
+                            mintLight: '#D1FAE5',
+                            coralLight: '#FFE4E6',
+                            lavenderLight: '#EDE9FE'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-pastel-bg text-slate-700 overflow-x-hidden" style="width: 1440px; margin: 0 auto;">
+
+    <header id="header" class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/50 flex items-center justify-between px-12 sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-2 cursor-pointer">
+            <div class="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-coral rounded-xl flex items-center justify-center text-white shadow-lg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                </svg>
+            </div>
+            <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-500">Tactik</span>
+        </div>
+        
+        <nav class="flex items-center gap-8">
+            <a href="#features" class="text-slate-600 hover:text-brand-blue font-medium transition-colors" data-i18n="navFeatures">Fonctionnalités</a>
+            <a href="#pillars" class="text-slate-600 hover:text-brand-blue font-medium transition-colors" data-i18n="navPillars">Piliers</a>
+            <a href="#how-it-works" class="text-slate-600 hover:text-brand-blue font-medium transition-colors" data-i18n="navHowItWorks">Comment ça marche</a>
+            <a href="#pricing" class="text-slate-600 hover:text-brand-blue font-medium transition-colors" data-i18n="navPricing">Tarifs</a>
+        </nav>
+
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <button id="langSelector" onclick="toggleLangDropdown()" class="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
+                    <i class="fa-solid fa-globe text-sm"></i>
+                    <span id="currentLang" class="text-sm font-semibold">FR</span>
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                
+                <div id="langDropdown" class="lang-dropdown bg-white rounded-xl shadow-lg border border-slate-200 py-2 w-40 z-50">
+                    <button onclick="changeLang('fr')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Français</span>
+                        <span id="checkFr" class="text-brand-blue"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('de')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Deutsch</span>
+                        <span id="checkDe" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('it')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Italiano</span>
+                        <span id="checkIt" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('en')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>English</span>
+                        <span id="checkEn" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+            </div>
+            
+            <a href="#signin" class="px-5 py-2.5 text-slate-600 hover:text-slate-800 font-semibold transition-colors" data-i18n="signIn">Se connecter</a>
+            <a href="#signup" class="btn-hover px-6 py-2.5 bg-brand-blue hover:bg-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-200" data-i18n="getStarted">Commencer</a>
+        </div>
+    </header>
+
+    <section id="signup-section" class="min-h-[calc(1024px-80px)] relative overflow-hidden bg-gradient-to-br from-white via-pastel-blueLight/20 to-pastel-mintLight/20 flex items-center justify-center py-16">
+        <div class="absolute top-20 right-20 w-96 h-96 bg-brand-blue/10 rounded-full blur-3xl animate-pulse-soft"></div>
+        <div class="absolute bottom-20 left-20 w-80 h-80 bg-brand-mint/10 rounded-full blur-3xl animate-pulse-soft" style="animation-delay: 2s;"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-coral/5 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10 w-full max-w-[1100px] mx-auto px-12 flex items-center gap-16">
+            <div class="flex-1 animate-slide-up">
+                <div class="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-full px-5 py-2 mb-6 shadow-sm">
+                    <span class="w-2 h-2 bg-brand-mint rounded-full animate-pulse"></span>
+                    <span class="text-sm font-semibold text-slate-600" data-i18n="joinCompanies">Rejoignez des centaines d'entreprises</span>
+                </div>
+                
+                <h1 class="text-5xl font-extrabold text-slate-800 mb-6 leading-tight">
+                    <span data-i18n="createAccount">Créez votre compte</span><br/>
+                    <span class="gradient-text">Tactik</span>
+                </h1>
+                
+                <p class="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg" data-i18n="analyzeOptimize">
+                    Commencez à analyser et optimiser votre site web en quelques minutes. Aucune carte bancaire requise.
+                </p>
+                
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-pastel-mintLight rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-check text-brand-mint"></i>
+                        </div>
+                        <p class="text-slate-600 font-medium" data-i18n="freeAudits">5 audits gratuits pour commencer</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-pastel-blueLight rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-check text-brand-blue"></i>
+                        </div>
+                        <p class="text-slate-600 font-medium" data-i18n="accessPillars">Accès à tous les piliers d'analyse</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-pastel-coralLight rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-check text-brand-coral"></i>
+                        </div>
+                        <p class="text-slate-600 font-medium" data-i18n="resultsIn2Min">Résultats en 2 minutes chrono</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex -space-x-3">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="User" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="User" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="User" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+                    </div>
+                    <div>
+                        <div class="flex gap-1 mb-1">
+                            <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                            <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                            <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                            <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                            <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                        </div>
+                        <p class="text-sm text-slate-600"><span class="font-bold">500+</span> <span data-i18n="satisfiedUsers">utilisateurs satisfaits</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-1 animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 p-10 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-brand-blue/10 to-transparent rounded-full blur-2xl"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-gradient-to-br from-brand-blue to-brand-coral rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <i class="fa-solid fa-rocket text-2xl text-white"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="createAccountTitle">Créer un compte</h2>
+                            <p class="text-slate-500" data-i18n="startFreeTrial">Commencez votre essai gratuit dès maintenant</p>
+                        </div>
+                        
+                        <form id="signupForm" class="space-y-5">
+                            <div>
+                                <label for="name" class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="fullName">Nom complet</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <i class="fa-solid fa-user"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        name="name" 
+                                        placeholder="Sophie Martin" 
+                                        data-i18n-placeholder="namePlaceholder"
+                                        required
+                                        class="input-focus w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue focus:bg-white transition-all"
+                                    >
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="email" class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="emailAddress">Adresse email</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <i class="fa-solid fa-envelope"></i>
+                                    </span>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        placeholder="sophie@exemple.com" 
+                                        data-i18n-placeholder="emailPlaceholder"
+                                        required
+                                        class="input-focus w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue focus:bg-white transition-all"
+                                    >
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="password" class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="password">Mot de passe</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </span>
+                                    <input 
+                                        type="password" 
+                                        id="password" 
+                                        name="password" 
+                                        placeholder="Minimum 8 caractères" 
+                                        data-i18n-placeholder="passwordPlaceholder"
+                                        required
+                                        minlength="8"
+                                        class="input-focus w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue focus:bg-white transition-all"
+                                    >
+                                    <button 
+                                        type="button" 
+                                        onclick="togglePassword()"
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                        <i class="fa-solid fa-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div id="passwordStrength" class="h-full bg-slate-300 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                    <span id="strengthText" class="text-xs text-slate-400 font-medium"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3 pt-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="terms" 
+                                    name="terms" 
+                                    required
+                                    class="w-5 h-5 mt-0.5 text-brand-blue border-slate-300 rounded focus:ring-brand-blue focus:ring-2 cursor-pointer"
+                                >
+                                <label for="terms" class="text-sm text-slate-600 leading-relaxed cursor-pointer">
+                                    <span data-i18n="iAccept">J'accepte les</span> <a href="#" class="text-brand-blue font-semibold hover:underline" data-i18n="termsOfUse">conditions d'utilisation</a> <span data-i18n="andThe">et la</span> <a href="#" class="text-brand-blue font-semibold hover:underline" data-i18n="privacyPolicy">politique de confidentialité</a>
+                                </label>
+                            </div>
+                            
+                            <button 
+                                type="submit" 
+                                id="submitBtn"
+                                class="btn-hover w-full py-4 bg-gradient-to-r from-brand-blue to-indigo-600 hover:from-indigo-600 hover:to-brand-blue text-white text-lg font-bold rounded-xl shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3"
+                            >
+                                <span data-i18n="createMyAccount">Créer mon compte</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </form>
+                        
+                        <div class="mt-6 text-center">
+                            <p class="text-slate-600">
+                                <span data-i18n="alreadyHaveAccount">Vous avez déjà un compte ?</span>
+                                <a href="#signin" class="text-brand-blue font-bold hover:underline" data-i18n="signInLink">Se connecter</a>
+                            </p>
+                        </div>
+                        
+                        <div class="mt-8 pt-8 border-t border-slate-200">
+                            <p class="text-center text-sm text-slate-500 mb-4" data-i18n="orContinueWith">Ou continuer avec</p>
+                            <div class="grid grid-cols-3 gap-3">
+                                <button class="btn-hover py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-semibold transition-all flex items-center justify-center gap-2">
+                                    <i class="fa-brands fa-google text-lg"></i>
+                                </button>
+                                <button class="btn-hover py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-semibold transition-all flex items-center justify-center gap-2">
+                                    <i class="fa-brands fa-github text-lg"></i>
+                                </button>
+                                <button class="btn-hover py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-600 font-semibold transition-all flex items-center justify-center gap-2">
+                                    <i class="fa-brands fa-linkedin text-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center justify-center gap-8 text-sm text-slate-500">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-brand-mint"></i>
+                        <span data-i18n="secureData">Données sécurisées</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-clock text-brand-blue"></i>
+                        <span data-i18n="signupIn1Min">Inscription en 1 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="footer" class="bg-white border-t border-slate-200 py-16 px-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-5 gap-8 mb-12">
+                <div class="col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-coral rounded-xl flex items-center justify-center text-white shadow-lg">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-slate-800">Tactik</span>
+                    </div>
+                    <p class="text-slate-600 leading-relaxed mb-4" data-i18n="footerDesc">Analysez et optimisez votre site web en quelques minutes. Performance, accessibilité, SEO et durabilité.</p>
+                    <div class="flex gap-3">
+                        <a href="#" class="w-10 h-10 bg-slate-100 hover:bg-brand-blue hover:text-white rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fa-brands fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-slate-100 hover:bg-brand-blue hover:text-white rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fa-brands fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-slate-100 hover:bg-brand-blue hover:text-white rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fa-brands fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-4" data-i18n="footerProduct">Produit</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#features" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerFeatures">Fonctionnalités</a></li>
+                        <li><a href="#pricing" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerPricing">Tarifs</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerChangelog">Changelog</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerDocs">Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-4" data-i18n="footerCompany">Entreprise</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerAbout">À propos</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerBlog">Blog</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerCareers">Carrières</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerContact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-4" data-i18n="footerLegal">Légal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerPrivacy">Confidentialité</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerTerms">Conditions</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerCookies">Cookies</a></li>
+                        <li><a href="#" class="text-slate-600 hover:text-brand-blue transition-colors" data-i18n="footerGDPR">RGPD</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-slate-200 pt-8 flex justify-between items-center">
+                <p class="text-slate-500 text-sm">&copy; 2026 Tactik. <span data-i18n="footerRights">Tous droits réservés.</span></p>
+                <p class="text-slate-400 text-sm"><span data-i18n="footerMade">Fait avec</span> <i class="fa-solid fa-heart text-red-500"></i> <span data-i18n="footerInFrance">en France</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            fr: {
+                navFeatures: "Fonctionnalités",
+                navPillars: "Piliers",
+                navHowItWorks: "Comment ça marche",
+                navPricing: "Tarifs",
+                signIn: "Se connecter",
+                getStarted: "Commencer",
+                joinCompanies: "Rejoignez des centaines d'entreprises",
+                createAccount: "Créez votre compte",
+                analyzeOptimize: "Commencez à analyser et optimiser votre site web en quelques minutes. Aucune carte bancaire requise.",
+                freeAudits: "5 audits gratuits pour commencer",
+                accessPillars: "Accès à tous les piliers d'analyse",
+                resultsIn2Min: "Résultats en 2 minutes chrono",
+                satisfiedUsers: "utilisateurs satisfaits",
+                createAccountTitle: "Créer un compte",
+                startFreeTrial: "Commencez votre essai gratuit dès maintenant",
+                fullName: "Nom complet",
+                namePlaceholder: "Sophie Martin",
+                emailAddress: "Adresse email",
+                emailPlaceholder: "sophie@exemple.com",
+                password: "Mot de passe",
+                passwordPlaceholder: "Minimum 8 caractères",
+                iAccept: "J'accepte les",
+                termsOfUse: "conditions d'utilisation",
+                andThe: "et la",
+                privacyPolicy: "politique de confidentialité",
+                createMyAccount: "Créer mon compte",
+                alreadyHaveAccount: "Vous avez déjà un compte ?",
+                signInLink: "Se connecter",
+                orContinueWith: "Ou continuer avec",
+                secureData: "Données sécurisées",
+                signupIn1Min: "Inscription en 1 min",
+                footerDesc: "Analysez et optimisez votre site web en quelques minutes. Performance, accessibilité, SEO et durabilité.",
+                footerProduct: "Produit",
+                footerFeatures: "Fonctionnalités",
+                footerPricing: "Tarifs",
+                footerChangelog: "Changelog",
+                footerDocs: "Documentation",
+                footerCompany: "Entreprise",
+                footerAbout: "À propos",
+                footerBlog: "Blog",
+                footerCareers: "Carrières",
+                footerContact: "Contact",
+                footerLegal: "Légal",
+                footerPrivacy: "Confidentialité",
+                footerTerms: "Conditions",
+                footerCookies: "Cookies",
+                footerGDPR: "RGPD",
+                footerRights: "Tous droits réservés.",
+                footerMade: "Fait avec",
+                footerInFrance: "en France",
+                weak: "Faible",
+                medium: "Moyen",
+                good: "Bon",
+                strong: "Fort"
+            },
+            de: {
+                navFeatures: "Funktionen",
+                navPillars: "Säulen",
+                navHowItWorks: "Wie es funktioniert",
+                navPricing: "Preise",
+                signIn: "Anmelden",
+                getStarted: "Loslegen",
+                joinCompanies: "Hunderte von Unternehmen beitreten",
+                createAccount: "Erstellen Sie Ihr Konto",
+                analyzeOptimize: "Beginnen Sie in wenigen Minuten mit der Analyse und Optimierung Ihrer Website. Keine Kreditkarte erforderlich.",
+                freeAudits: "5 kostenlose Audits zum Start",
+                accessPillars: "Zugriff auf alle Analysesäulen",
+                resultsIn2Min: "Ergebnisse in 2 Minuten",
+                satisfiedUsers: "zufriedene Benutzer",
+                createAccountTitle: "Konto erstellen",
+                startFreeTrial: "Starten Sie jetzt Ihre kostenlose Testversion",
+                fullName: "Vollständiger Name",
+                namePlaceholder: "Sophie Martin",
+                emailAddress: "E-Mail-Adresse",
+                emailPlaceholder: "sophie@beispiel.com",
+                password: "Passwort",
+                passwordPlaceholder: "Mindestens 8 Zeichen",
+                iAccept: "Ich akzeptiere die",
+                termsOfUse: "Nutzungsbedingungen",
+                andThe: "und die",
+                privacyPolicy: "Datenschutzrichtlinie",
+                createMyAccount: "Mein Konto erstellen",
+                alreadyHaveAccount: "Sie haben bereits ein Konto?",
+                signInLink: "Anmelden",
+                orContinueWith: "Oder fortfahren mit",
+                secureData: "Sichere Daten",
+                signupIn1Min: "Anmeldung in 1 Min.",
+                footerDesc: "Analysieren und optimieren Sie Ihre Website in wenigen Minuten. Leistung, Barrierefreiheit, SEO und Nachhaltigkeit.",
+                footerProduct: "Produkt",
+                footerFeatures: "Funktionen",
+                footerPricing: "Preise",
+                footerChangelog: "Änderungsprotokoll",
+                footerDocs: "Dokumentation",
+                footerCompany: "Unternehmen",
+                footerAbout: "Über uns",
+                footerBlog: "Blog",
+                footerCareers: "Karriere",
+                footerContact: "Kontakt",
+                footerLegal: "Rechtliches",
+                footerPrivacy: "Datenschutz",
+                footerTerms: "Bedingungen",
+                footerCookies: "Cookies",
+                footerGDPR: "DSGVO",
+                footerRights: "Alle Rechte vorbehalten.",
+                footerMade: "Hergestellt mit",
+                footerInFrance: "in Frankreich",
+                weak: "Schwach",
+                medium: "Mittel",
+                good: "Gut",
+                strong: "Stark"
+            },
+            it: {
+                navFeatures: "Caratteristiche",
+                navPillars: "Pilastri",
+                navHowItWorks: "Come funziona",
+                navPricing: "Prezzi",
+                signIn: "Accedi",
+                getStarted: "Inizia",
+                joinCompanies: "Unisciti a centinaia di aziende",
+                createAccount: "Crea il tuo account",
+                analyzeOptimize: "Inizia ad analizzare e ottimizzare il tuo sito web in pochi minuti. Nessuna carta di credito richiesta.",
+                freeAudits: "5 audit gratuiti per iniziare",
+                accessPillars: "Accesso a tutti i pilastri di analisi",
+                resultsIn2Min: "Risultati in 2 minuti",
+                satisfiedUsers: "utenti soddisfatti",
+                createAccountTitle: "Crea un account",
+                startFreeTrial: "Inizia subito la tua prova gratuita",
+                fullName: "Nome completo",
+                namePlaceholder: "Sophie Martin",
+                emailAddress: "Indirizzo email",
+                emailPlaceholder: "sophie@esempio.com",
+                password: "Password",
+                passwordPlaceholder: "Minimo 8 caratteri",
+                iAccept: "Accetto i",
+                termsOfUse: "termini di utilizzo",
+                andThe: "e la",
+                privacyPolicy: "politica sulla privacy",
+                createMyAccount: "Crea il mio account",
+                alreadyHaveAccount: "Hai già un account?",
+                signInLink: "Accedi",
+                orContinueWith: "Oppure continua con",
+                secureData: "Dati sicuri",
+                signupIn1Min: "Registrazione in 1 min",
+                footerDesc: "Analizza e ottimizza il tuo sito web in pochi minuti. Prestazioni, accessibilità, SEO e sostenibilità.",
+                footerProduct: "Prodotto",
+                footerFeatures: "Caratteristiche",
+                footerPricing: "Prezzi",
+                footerChangelog: "Changelog",
+                footerDocs: "Documentazione",
+                footerCompany: "Azienda",
+                footerAbout: "Chi siamo",
+                footerBlog: "Blog",
+                footerCareers: "Carriere",
+                footerContact: "Contatto",
+                footerLegal: "Legale",
+                footerPrivacy: "Privacy",
+                footerTerms: "Termini",
+                footerCookies: "Cookie",
+                footerGDPR: "GDPR",
+                footerRights: "Tutti i diritti riservati.",
+                footerMade: "Fatto con",
+                footerInFrance: "in Francia",
+                weak: "Debole",
+                medium: "Medio",
+                good: "Buono",
+                strong: "Forte"
+            },
+            en: {
+                navFeatures: "Features",
+                navPillars: "Pillars",
+                navHowItWorks: "How it works",
+                navPricing: "Pricing",
+                signIn: "Sign In",
+                getStarted: "Get Started",
+                joinCompanies: "Join hundreds of companies",
+                createAccount: "Create your account",
+                analyzeOptimize: "Start analyzing and optimizing your website in minutes. No credit card required.",
+                freeAudits: "5 free audits to get started",
+                accessPillars: "Access to all analysis pillars",
+                resultsIn2Min: "Results in 2 minutes",
+                satisfiedUsers: "satisfied users",
+                createAccountTitle: "Create an account",
+                startFreeTrial: "Start your free trial now",
+                fullName: "Full name",
+                namePlaceholder: "Sophie Martin",
+                emailAddress: "Email address",
+                emailPlaceholder: "sophie@example.com",
+                password: "Password",
+                passwordPlaceholder: "Minimum 8 characters",
+                iAccept: "I accept the",
+                termsOfUse: "terms of use",
+                andThe: "and the",
+                privacyPolicy: "privacy policy",
+                createMyAccount: "Create my account",
+                alreadyHaveAccount: "Already have an account?",
+                signInLink: "Sign In",
+                orContinueWith: "Or continue with",
+                secureData: "Secure data",
+                signupIn1Min: "Sign up in 1 min",
+                footerDesc: "Analyze and optimize your website in minutes. Performance, accessibility, SEO and sustainability.",
+                footerProduct: "Product",
+                footerFeatures: "Features",
+                footerPricing: "Pricing",
+                footerChangelog: "Changelog",
+                footerDocs: "Documentation",
+                footerCompany: "Company",
+                footerAbout: "About",
+                footerBlog: "Blog",
+                footerCareers: "Careers",
+                footerContact: "Contact",
+                footerLegal: "Legal",
+                footerPrivacy: "Privacy",
+                footerTerms: "Terms",
+                footerCookies: "Cookies",
+                footerGDPR: "GDPR",
+                footerRights: "All rights reserved.",
+                footerMade: "Made with",
+                footerInFrance: "in France",
+                weak: "Weak",
+                medium: "Medium",
+                good: "Good",
+                strong: "Strong"
+            }
+        };
+
+        let currentLanguage = 'fr';
+
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLang(lang) {
+            currentLanguage = lang;
+            
+            document.querySelectorAll('[id^="check"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('check' + lang.charAt(0).toUpperCase() + lang.slice(1)).classList.remove('hidden');
+            
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+            
+            toggleLangDropdown();
+        }
+
+        document.addEventListener('click', function(e) {
+            const langSelector = document.getElementById('langSelector');
+            const langDropdown = document.getElementById('langDropdown');
+            
+            if (!langSelector.contains(e.target) && !langDropdown.contains(e.target)) {
+                langDropdown.classList.remove('show');
+            }
+        });
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        document.getElementById('password').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthBar = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            if (password.length >= 8) strength += 25;
+            if (password.match(/[a-z]+/)) strength += 25;
+            if (password.match(/[A-Z]+/)) strength += 25;
+            if (password.match(/[0-9]+/)) strength += 25;
+            
+            strengthBar.style.width = strength + '%';
+            
+            const strengthLabels = {
+                weak: translations[currentLanguage].weak,
+                medium: translations[currentLanguage].medium,
+                good: translations[currentLanguage].good,
+                strong: translations[currentLanguage].strong
+            };
+            
+            if (strength <= 25) {
+                strengthBar.style.backgroundColor = '#FB7185';
+                strengthText.textContent = strengthLabels.weak;
+                strengthText.style.color = '#FB7185';
+            } else if (strength <= 50) {
+                strengthBar.style.backgroundColor = '#FBBF24';
+                strengthText.textContent = strengthLabels.medium;
+                strengthText.style.color = '#FBBF24';
+            } else if (strength <= 75) {
+                strengthBar.style.backgroundColor = '#818CF8';
+                strengthText.textContent = strengthLabels.good;
+                strengthText.style.color = '#818CF8';
+            } else {
+                strengthBar.style.backgroundColor = '#34D399';
+                strengthText.textContent = strengthLabels.strong;
+                strengthText.style.color = '#34D399';
+            }
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.classList.add('btn-submit-animate');
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Création en cours...</span>';
+            
+            setTimeout(function() {
+                window.location.href = '#dashboard';
+            }, 1500);
+        });
+    </script>
+
+</body>
+</html>

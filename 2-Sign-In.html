@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .tile-hover { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
+        .tile-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(99, 102, 241, 0.15); }
+        
+        .progress-bar-fill { transition: width 1.5s ease-out; }
+        
+        .btn-scale { transition: transform 0.1s ease; }
+        .btn-scale:active { transform: scale(0.95); }
+
+        @keyframes pulse-soft { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        .animate-pulse-soft { animation: pulse-soft 3s infinite; }
+        
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+        .modal-overlay.hidden .modal-content { transform: scale(0.95); opacity: 0; }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .lang-dropdown.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#64748B',
+                            blue: '#818CF8',
+                            mint: '#34D399',
+                            coral: '#FB7185',
+                            lavender: '#A5B4FC'
+                        },
+                        pastel: {
+                            bg: '#F8FAFC',
+                            surface: '#FFFFFF',
+                            blueLight: '#E0E7FF',
+                            mintLight: '#D1FAE5',
+                            coralLight: '#FFE4E6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-pastel-bg text-slate-700 overflow-hidden" style="width: 1440px; margin: 0 auto;">
+
+    <header id="header" class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 cursor-pointer">
+                <div class="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-coral rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-500">Tactik</span>
+            </div>
+            
+            <nav class="hidden lg:flex items-center gap-1 ml-8">
+                <a href="#dashboard" class="px-4 py-2 text-brand-blue font-semibold bg-blue-50 rounded-lg transition-colors">Dashboard</a>
+                <a href="#site-overview" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Site Overview</a>
+                <a href="#new-audit" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">New Audit</a>
+                <a href="#audit-details" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Audit Details</a>
+                <a href="#audit-comparison" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Audit Comparison</a>
+                <a href="#settings" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Settings</a>
+            </nav>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <div class="relative group">
+                <input type="text" placeholder="Search sites..." class="w-80 pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-brand-blue transition-colors"></i>
+            </div>
+            
+            <button class="relative p-2.5 text-slate-400 hover:text-brand-coral transition-colors">
+                <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-brand-coral rounded-full border-2 border-white animate-pulse"></span>
+            </button>
+            
+            <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+            
+            <div class="relative">
+                <button id="langSelector" onclick="toggleLangDropdown()" class="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
+                    <i class="fa-solid fa-globe text-sm"></i>
+                    <span id="currentLang" class="text-sm font-semibold">FR</span>
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                
+                <div id="langDropdown" class="lang-dropdown bg-white rounded-xl shadow-lg border border-slate-200 py-2 w-40 z-50">
+                    <button onclick="changeLang('fr')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Français</span>
+                        <span id="checkFr" class="text-brand-blue"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('de')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Deutsch</span>
+                        <span id="checkDe" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('it')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Italiano</span>
+                        <span id="checkIt" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('en')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>English</span>
+                        <span id="checkEn" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 cursor-pointer p-1.5 pr-4 hover:bg-slate-50 rounded-full transition-colors">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-mint to-brand-blue p-[2px]">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Avatar" class="w-full h-full rounded-full object-cover border-2 border-white">
+                </div>
+                <div class="text-left">
+                    <p class="text-sm font-bold text-slate-700">Sophie Martin</p>
+                    <p class="text-xs text-slate-400">Admin</p>
+                </div>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-[calc(1024px-80px)]">
+        <main class="flex-1 overflow-y-auto p-8">
+            
+            <section id="welcome-section" class="flex justify-between items-end mb-8">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-slate-800 mb-2" data-i18n="welcome">Bienvenue, Sophie 👋</h1>
+                    <p class="text-slate-500" data-i18n="overview">Voici un aperçu de la santé de vos sites aujourd'hui.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openAddSiteModal()" class="btn-scale bg-brand-blue hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-blue-200 flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-plus"></i>
+                        <span data-i18n="addNewSite">Ajouter un nouveau site</span>
+                    </button>
+                    <button class="btn-scale bg-white border border-slate-200 hover:border-brand-blue text-slate-600 px-4 py-3 rounded-xl font-medium shadow-sm flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span data-i18n="export">Exporter</span>
+                    </button>
+                </div>
+            </section>
+
+            <section id="filters-section" class="bg-white p-4 rounded-2xl border border-slate-200 mb-8 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="relative flex-1 max-w-md">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchSites" placeholder="Rechercher par nom ou surnom..." data-i18n-placeholder="searchPlaceholder" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button class="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 hover:border-brand-blue transition-colors">
+                            <i class="fa-solid fa-filter text-slate-400"></i>
+                            <span data-i18n="pillars">Piliers</span>
+                        </button>
+                        <button class="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 hover:border-brand-blue transition-colors">
+                            <i class="fa-solid fa-chart-line text-slate-400"></i>
+                            <span data-i18n="score">Score</span>
+                        </button>
+                        <button class="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 text-sm font-medium hover:bg-slate-50 hover:border-brand-blue transition-colors">
+                            <i class="fa-regular fa-calendar text-slate-400"></i>
+                            <span data-i18n="date">Date</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-slate-500" data-i18n="sortBy">Trier par :</span>
+                    <select id="sortSelect" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand-blue">
+                        <option data-i18n="lastActivity">Dernière activité</option>
+                        <option data-i18n="overallScore">Score global</option>
+                        <option data-i18n="nameAZ">Nom (A-Z)</option>
+                        <option data-i18n="dateAdded">Date d'ajout</option>
+                    </select>
+                </div>
+            </section>
+
+            <section id="performance-overview" class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-brand-blue to-indigo-500 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200 relative overflow-hidden group cursor-pointer transform transition hover:-translate-y-1">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-white/20 transition-all"></div>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-globe text-lg"></i>
+                        </div>
+                        <span class="text-xs font-bold bg-white/20 px-2 py-1 rounded backdrop-blur-sm" data-i18n="thisWeek">+2 cette semaine</span>
+                    </div>
+                    <h3 class="text-3xl font-bold mb-1">12</h3>
+                    <p class="text-indigo-100 text-sm font-medium" data-i18n="activeSites">Sites actifs</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group cursor-pointer transform transition hover:-translate-y-1 hover:border-brand-mint/30">
+                    <div class="absolute right-0 bottom-0 w-24 h-24 bg-pastel-mintLight rounded-full blur-2xl -mr-8 -mb-8 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-pastel-mintLight text-brand-mint rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-check-circle text-lg"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-slate-800">92<span class="text-lg text-slate-400">/100</span></p>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm font-medium" data-i18n="avgScore">Score moyen global</p>
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                        <div class="bg-brand-mint h-full rounded-full progress-bar-fill" style="width: 92%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group cursor-pointer transform transition hover:-translate-y-1 hover:border-brand-coral/30">
+                    <div class="absolute right-0 bottom-0 w-24 h-24 bg-pastel-coralLight rounded-full blur-2xl -mr-8 -mb-8 group-hover:scale-150 transition-transform duration-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-pastel-coralLight text-brand-coral rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-slate-800">3</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm font-medium" data-i18n="sitesNeedAttention">Sites nécessitant attention</p>
+                    <p class="text-xs text-brand-coral mt-2 font-medium"><i class="fa-solid fa-arrow-up mr-1"></i><span data-i18n="requiresAction">Action requise</span></p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group cursor-pointer transform transition hover:-translate-y-1">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-slate-800">28</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-sm font-medium" data-i18n="totalAudits">Total audits ce mois</p>
+                    <button class="mt-3 text-sm font-semibold text-brand-blue hover:text-brand-navy flex items-center gap-1">
+                        <span data-i18n="viewAll">Voir tout</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </section>
+
+            <section id="sites-grid-section">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-800" data-i18n="yourWebsites">Vos sites web</h2>
+                    <a href="#" class="text-sm font-semibold text-brand-blue hover:text-brand-navy"><span data-i18n="viewAllSites">Voir tout (12)</span> <i class="fa-solid fa-arrow-right ml-1"></i></a>
+                </div>
+
+                <div id="sitesGrid" class="grid grid-cols-3 gap-6 mb-8">
+                    <div class="tile-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col relative group cursor-pointer" onclick="window.location.href='#site-overview'">
+                        <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-slate-300 hover:text-slate-600" onclick="event.stopPropagation();"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-shopping-bag text-2xl text-brand-blue"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">Fashion Store</h3>
+                                <p class="text-slate-400 text-sm truncate max-w-[150px]">www.fashion-store.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1" data-i18n="overall">Global</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-2xl font-bold text-slate-800">94</span>
+                                    <span class="text-xs text-brand-mint font-medium bg-pastel-mintLight px-1.5 py-0.5 rounded">+2</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-[1px] bg-slate-100"></div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Performance">
+                                    <i class="fa-solid fa-gauge-high text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-blueLight text-brand-blue flex items-center justify-center" title="Accessibility">
+                                    <i class="fa-solid fa-universal-access text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-coralLight text-brand-coral flex items-center justify-center" title="SEO">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-brand-blue to-brand-mint progress-bar-fill" style="width: 94%"></div>
+                        </div>
+
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xs text-slate-400" data-i18n="lastAudit">Dernier audit : il y a 2h</span>
+                            <button class="btn-scale px-4 py-2 bg-slate-50 text-slate-600 hover:bg-brand-blue hover:text-white rounded-lg text-sm font-semibold transition-all border border-slate-200 hover:border-brand-blue">
+                                <span data-i18n="viewDetails">Voir détails</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tile-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col relative group cursor-pointer" onclick="window.location.href='#site-overview'">
+                        <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-slate-300 hover:text-slate-600" onclick="event.stopPropagation();"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-laptop-code text-2xl text-purple-500"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">TechStart.io</h3>
+                                <p class="text-slate-400 text-sm truncate max-w-[150px]">www.techstart.io</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1" data-i18n="overall">Global</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-2xl font-bold text-brand-coral">58</span>
+                                    <span class="text-xs text-brand-coral font-medium bg-pastel-coralLight px-1.5 py-0.5 rounded">-5</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-[1px] bg-slate-100"></div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-pastel-coralLight text-brand-coral flex items-center justify-center" title="Performance">
+                                    <i class="fa-solid fa-gauge-high text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Accessibility">
+                                    <i class="fa-solid fa-universal-access text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-blueLight text-brand-blue flex items-center justify-center" title="SEO">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-brand-coral to-orange-400 progress-bar-fill" style="width: 58%"></div>
+                        </div>
+
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xs text-slate-400" data-i18n="lastAuditYesterday">Dernier audit : Hier</span>
+                            <button class="btn-scale px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold shadow-md shadow-blue-200 hover:bg-indigo-600 transition-all">
+                                <span data-i18n="startAudit">Lancer audit</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tile-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col relative group cursor-pointer" onclick="window.location.href='#site-overview'">
+                        <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-slate-300 hover:text-slate-600" onclick="event.stopPropagation();"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-leaf text-2xl text-green-500"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">EcoLife Blog</h3>
+                                <p class="text-slate-400 text-sm truncate max-w-[150px]">www.ecolife-blog.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1" data-i18n="overall">Global</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-2xl font-bold text-slate-800">88</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-[1px] bg-slate-100"></div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-pastel-blueLight text-brand-blue flex items-center justify-center" title="Performance">
+                                    <i class="fa-solid fa-gauge-high text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Accessibility">
+                                    <i class="fa-solid fa-universal-access text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="SEO">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-500 flex items-center justify-center" title="Sustainability">
+                                    <i class="fa-solid fa-shield-halved text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-brand-blue to-brand-mint progress-bar-fill" style="width: 88%"></div>
+                        </div>
+
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xs text-slate-400" data-i18n="lastAudit3d">Dernier audit : il y a 3j</span>
+                            <button class="btn-scale px-4 py-2 bg-slate-50 text-slate-600 hover:bg-brand-blue hover:text-white rounded-lg text-sm font-semibold transition-all border border-slate-200 hover:border-brand-blue">
+                                <span data-i18n="viewDetails">Voir détails</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tile-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col relative group cursor-pointer" onclick="window.location.href='#site-overview'">
+                        <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-slate-300 hover:text-slate-600" onclick="event.stopPropagation();"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-utensils text-2xl text-orange-500"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">Foodie Restaurant</h3>
+                                <p class="text-slate-400 text-sm truncate max-w-[150px]">www.foodie-rest.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1" data-i18n="overall">Global</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-2xl font-bold text-slate-800">81</span>
+                                    <span class="text-xs text-brand-mint font-medium bg-pastel-mintLight px-1.5 py-0.5 rounded">+8</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-[1px] bg-slate-100"></div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Performance">
+                                    <i class="fa-solid fa-gauge-high text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-blueLight text-brand-blue flex items-center justify-center" title="Accessibility">
+                                    <i class="fa-solid fa-universal-access text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-brand-mint to-green-400 progress-bar-fill" style="width: 81%"></div>
+                        </div>
+
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xs text-slate-400" data-i18n="lastAudit5d">Dernier audit : il y a 5j</span>
+                            <button class="btn-scale px-4 py-2 bg-slate-50 text-slate-600 hover:bg-brand-blue hover:text-white rounded-lg text-sm font-semibold transition-all border border-slate-200 hover:border-brand-blue">
+                                <span data-i18n="viewDetails">Voir détails</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tile-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col relative group cursor-pointer" onclick="window.location.href='#site-overview'">
+                        <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-slate-300 hover:text-slate-600" onclick="event.stopPropagation();"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-camera text-2xl text-pink-500"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">Photo Portfolio</h3>
+                                <p class="text-slate-400 text-sm truncate max-w-[150px]">www.photo-portfolio.net</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1" data-i18n="overall">Global</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-2xl font-bold text-slate-800">76</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-[1px] bg-slate-100"></div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-pastel-coralLight text-brand-coral flex items-center justify-center" title="Performance">
+                                    <i class="fa-solid fa-gauge-high text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Accessibility">
+                                    <i class="fa-solid fa-universal-access text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-blueLight text-brand-blue flex items-center justify-center" title="SEO">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-orange-400 to-brand-coral progress-bar-fill" style="width: 76%"></div>
+                        </div>
+
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xs text-slate-400" data-i18n="lastAudit1w">Dernier audit : il y a 1sem</span>
+                            <button class="btn-scale px-4 py-2 bg-slate-50 text-slate-600 hover:bg-brand-blue hover:text-white rounded-lg text-sm font-semibold transition-all border border-slate-200 hover:border-brand-blue">
+                                <span data-i18n="viewDetails">Voir détails</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tile-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col relative group cursor-pointer" onclick="window.location.href='#site-overview'">
+                        <div class="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-slate-300 hover:text-slate-600" onclick="event.stopPropagation();"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-dumbbell text-2xl text-red-500"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">Fitness Hub</h3>
+                                <p class="text-slate-400 text-sm truncate max-w-[150px]">www.fitness-hub.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1" data-i18n="overall">Global</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-2xl font-bold text-slate-800">91</span>
+                                    <span class="text-xs text-brand-mint font-medium bg-pastel-mintLight px-1.5 py-0.5 rounded">+3</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-[1px] bg-slate-100"></div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Performance">
+                                    <i class="fa-solid fa-gauge-high text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-mintLight text-brand-mint flex items-center justify-center" title="Accessibility">
+                                    <i class="fa-solid fa-universal-access text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-pastel-blueLight text-brand-blue flex items-center justify-center" title="SEO">
+                                    <i class="fa-solid fa-magnifying-glass-chart text-xs"></i>
+                                </div>
+                                <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-500 flex items-center justify-center" title="Sustainability">
+                                    <i class="fa-solid fa-shield-halved text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-brand-mint to-green-500 progress-bar-fill" style="width: 91%"></div>
+                        </div>
+
+                        <div class="mt-auto flex justify-between items-center">
+                            <span class="text-xs text-slate-400" data-i18n="lastAudit4h">Dernier audit : il y a 4h</span>
+                            <button class="btn-scale px-4 py-2 bg-slate-50 text-slate-600 hover:bg-brand-blue hover:text-white rounded-lg text-sm font-semibold transition-all border border-slate-200 hover:border-brand-blue">
+                                <span data-i18n="viewDetails">Voir détails</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="insights-section" class="grid grid-cols-2 gap-6 mb-8">
+                <div id="panel-top-recommendations" class="bg-gradient-to-br from-white to-indigo-50/30 rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-brand-blue/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    
+                    <div class="flex justify-between items-start mb-6 relative z-10">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles text-brand-blue"></i> <span data-i18n="topRecommendations">Recommandations principales</span>
+                            </h3>
+                            <p class="text-sm text-slate-500 mt-1" data-i18n="aiSuggested">Actions suggérées par l'IA pour améliorer vos scores</p>
+                        </div>
+                        <span class="bg-brand-blue text-white text-xs font-bold px-3 py-1 rounded-full shadow-md shadow-blue-200" data-i18n="priority">3 Prioritaires</span>
+                    </div>
+
+                    <div class="space-y-3 relative z-10">
+                        <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-lg bg-red-100 text-red-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-image"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800" data-i18n="optimizeImages">Optimiser les images sur TechStart.io</h4>
+                                    <p class="text-xs text-slate-500" data-i18n="compressImages">Compresser 12 grandes images pour gagner 2,4s de chargement</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-brand-mint bg-pastel-mintLight px-2 py-1 rounded">+15 pts</span>
+                                <button class="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-indigo-600 transition-colors">
+                                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-lg bg-blue-100 text-brand-blue flex items-center justify-center">
+                                    <i class="fa-solid fa-code"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800" data-i18n="minifyCSS">Minifier le CSS sur Fashion Store</h4>
+                                    <p class="text-xs text-slate-500" data-i18n="reduceStylesheet">Réduire la taille des feuilles de style de 45KB</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-brand-mint bg-pastel-mintLight px-2 py-1 rounded">+5 pts</span>
+                                <button class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-text-height"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-800" data-i18n="addAltText">Ajouter du texte alt à Photo Portfolio</h4>
+                                    <p class="text-xs text-slate-500" data-i18n="missingAlt">18 images sans descriptions d'accessibilité</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-brand-blue bg-pastel-blueLight px-2 py-1 rounded">+8 pts</span>
+                                <button class="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-indigo-600 transition-colors">
+                                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-sites-needing-attention" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-eye text-brand-coral"></i> <span data-i18n="sitesNeedingAttention">Sites nécessitant attention</span>
+                        </h3>
+                        <div class="w-2 h-2 bg-brand-coral rounded-full animate-pulse"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-red-50/50 rounded-xl border border-red-100 cursor-pointer hover:bg-red-50 transition-colors" onclick="window.location.href='#site-overview'">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-bold text-sm text-slate-700">TechStart.io</span>
+                                <span class="text-xs font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded" data-i18n="critical">Critique</span>
+                            </div>
+                            <div class="w-full bg-white h-1.5 rounded-full overflow-hidden mb-2">
+                                <div class="bg-red-500 h-full rounded-full" style="width: 58%"></div>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-2"><span data-i18n="performance">Performance</span>: <span class="font-bold text-slate-700">42/100</span></p>
+                            <button class="text-xs font-semibold text-brand-blue hover:underline flex items-center gap-1">
+                                <span data-i18n="viewSite">Voir le site</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-orange-50/50 rounded-xl border border-orange-100 cursor-pointer hover:bg-orange-50 transition-colors" onclick="window.location.href='#site-overview'">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-bold text-sm text-slate-700">Photo Portfolio</span>
+                                <span class="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded" data-i18n="warning">Avertissement</span>
+                            </div>
+                            <div class="w-full bg-white h-1.5 rounded-full overflow-hidden mb-2">
+                                <div class="bg-orange-400 h-full rounded-full" style="width: 76%"></div>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-2"><span data-i18n="accessibility">Accessibilité</span>: <span class="font-bold text-slate-700">65/100</span></p>
+                            <button class="text-xs font-semibold text-brand-blue hover:underline flex items-center gap-1">
+                                <span data-i18n="viewSite">Voir le site</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="p-4 bg-yellow-50/50 rounded-xl border border-yellow-100 cursor-pointer hover:bg-yellow-50 transition-colors" onclick="window.location.href='#site-overview'">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-bold text-sm text-slate-700">Foodie Restaurant</span>
+                                <span class="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded" data-i18n="monitor">Surveiller</span>
+                            </div>
+                            <div class="w-full bg-white h-1.5 rounded-full overflow-hidden mb-2">
+                                <div class="bg-yellow-400 h-full rounded-full" style="width: 81%"></div>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-2">SEO: <span class="font-bold text-slate-700">78/100</span></p>
+                            <button class="text-xs font-semibold text-brand-blue hover:underline flex items-center gap-1">
+                                <span data-i18n="viewSite">Voir le site</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <button class="w-full py-2 text-sm font-semibold text-slate-600 hover:text-brand-blue transition-colors flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-sliders"></i> <span data-i18n="configureAlerts">Configurer les alertes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chart-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800" data-i18n="performanceTrends">Tendances de performance</h3>
+                        <p class="text-sm text-slate-500" data-i18n="avgScoresAllSites">Scores moyens sur tous les sites</p>
+                    </div>
+                    <select class="text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 font-medium focus:ring-0 focus:border-brand-blue">
+                        <option data-i18n="last30Days">30 derniers jours</option>
+                        <option data-i18n="last7Days">7 derniers jours</option>
+                        <option data-i18n="last90Days">90 derniers jours</option>
+                    </select>
+                </div>
+                <div id="trendChart" style="height: 300px; width: 100%;"></div>
+            </section>
+
+            <footer id="footer" class="border-t border-slate-200 pt-6 pb-2 text-center text-slate-400 text-sm">
+                <p>&copy; 2026 Tactik Analytics. <span data-i18n="allRights">Tous droits réservés.</span></p>
+                <div class="flex justify-center gap-4 mt-2">
+                    <a href="#" class="hover:text-brand-blue transition-colors" data-i18n="privacyPolicy">Confidentialité</a>
+                    <a href="#" class="hover:text-brand-blue transition-colors" data-i18n="termsOfService">Conditions</a>
+                    <a href="#" class="hover:text-brand-blue transition-colors" data-i18n="support">Support</a>
+                </div>
+            </footer>
+
+        </main>
+    </div>
+
+    <div id="addSiteModal" class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="modal-content bg-white rounded-3xl shadow-2xl w-[500px] p-8 relative transform transition-all">
+            <button onclick="closeAddSiteModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-pastel-blueLight text-brand-blue rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-globe text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800" data-i18n="addNewSiteTitle">Ajouter un nouveau site</h2>
+                <p class="text-slate-500 mt-2" data-i18n="startTracking">Commencez à suivre la performance de votre site</p>
+            </div>
+
+            <form id="addSiteForm" class="space-y-5" onsubmit="handleAddSite(event)">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="siteNameLabel">Nom du site (surnom)</label>
+                    <input type="text" id="siteName" placeholder="ex. Mon blog personnel" data-i18n-placeholder="siteNamePlaceholder" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2" data-i18n="siteUrlLabel">URL du site</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">https://</span>
+                        <input type="text" id="siteUrl" placeholder="www.mon-site.com" data-i18n-placeholder="siteUrlPlaceholder" required class="w-full pl-16 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" id="auditNow" class="w-4 h-4 text-brand-blue border-slate-300 rounded focus:ring-brand-blue">
+                    <label for="auditNow" class="text-sm text-slate-600" data-i18n="runFirstAudit">Lancer le premier audit automatiquement</label>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-brand-blue hover:bg-indigo-600 text-white text-lg font-bold rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-0.5">
+                    <span data-i18n="addSiteBtn">Ajouter le site</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            fr: {
+                welcome: "Bienvenue, Sophie 👋",
+                overview: "Voici un aperçu de la santé de vos sites aujourd'hui.",
+                addNewSite: "Ajouter un nouveau site",
+                export: "Exporter",
+                searchPlaceholder: "Rechercher par nom ou surnom...",
+                pillars: "Piliers",
+                score: "Score",
+                date: "Date",
+                sortBy: "Trier par :",
+                lastActivity: "Dernière activité",
+                overallScore: "Score global",
+                nameAZ: "Nom (A-Z)",
+                dateAdded: "Date d'ajout",
+                thisWeek: "+2 cette semaine",
+                activeSites: "Sites actifs",
+                avgScore: "Score moyen global",
+                sitesNeedAttention: "Sites nécessitant attention",
+                requiresAction: "Action requise",
+                totalAudits: "Total audits ce mois",
+                viewAll: "Voir tout",
+                yourWebsites: "Vos sites web",
+                viewAllSites: "Voir tout (12)",
+                overall: "Global",
+                lastAudit: "Dernier audit : il y a 2h",
+                lastAuditYesterday: "Dernier audit : Hier",
+                lastAudit3d: "Dernier audit : il y a 3j",
+                lastAudit5d: "Dernier audit : il y a 5j",
+                lastAudit1w: "Dernier audit : il y a 1sem",
+                lastAudit4h: "Dernier audit : il y a 4h",
+                viewDetails: "Voir détails",
+                startAudit: "Lancer audit",
+                topRecommendations: "Recommandations principales",
+                aiSuggested: "Actions suggérées par l'IA pour améliorer vos scores",
+                priority: "3 Prioritaires",
+                optimizeImages: "Optimiser les images sur TechStart.io",
+                compressImages: "Compresser 12 grandes images pour gagner 2,4s de chargement",
+                minifyCSS: "Minifier le CSS sur Fashion Store",
+                reduceStylesheet: "Réduire la taille des feuilles de style de 45KB",
+                addAltText: "Ajouter du texte alt à Photo Portfolio",
+                missingAlt: "18 images sans descriptions d'accessibilité",
+                sitesNeedingAttention: "Sites nécessitant attention",
+                critical: "Critique",
+                warning: "Avertissement",
+                monitor: "Surveiller",
+                performance: "Performance",
+                accessibility: "Accessibilité",
+                viewSite: "Voir le site",
+                configureAlerts: "Configurer les alertes",
+                performanceTrends: "Tendances de performance",
+                avgScoresAllSites: "Scores moyens sur tous les sites",
+                last30Days: "30 derniers jours",
+                last7Days: "7 derniers jours",
+                last90Days: "90 derniers jours",
+                allRights: "Tous droits réservés.",
+                privacyPolicy: "Confidentialité",
+                termsOfService: "Conditions",
+                support: "Support",
+                addNewSiteTitle: "Ajouter un nouveau site",
+                startTracking: "Commencez à suivre la performance de votre site",
+                siteNameLabel: "Nom du site (surnom)",
+                siteNamePlaceholder: "ex. Mon blog personnel",
+                siteUrlLabel: "URL du site",
+                siteUrlPlaceholder: "www.mon-site.com",
+                runFirstAudit: "Lancer le premier audit automatiquement",
+                addSiteBtn: "Ajouter le site"
+            },
+            de: {
+                welcome: "Willkommen zurück, Sophie 👋",
+                overview: "Hier ist ein Überblick über die Gesundheit Ihrer Website heute.",
+                addNewSite: "Neue Website hinzufügen",
+                export: "Exportieren",
+                searchPlaceholder: "Nach Name oder Spitzname suchen...",
+                pillars: "Säulen",
+                score: "Bewertung",
+                date: "Datum",
+                sortBy: "Sortieren nach:",
+                lastActivity: "Letzte Aktivität",
+                overallScore: "Gesamtbewertung",
+                nameAZ: "Name (A-Z)",
+                dateAdded: "Hinzugefügt am",
+                thisWeek: "+2 diese Woche",
+                activeSites: "Aktive Websites",
+                avgScore: "Durchschnittliche Gesamtbewertung",
+                sitesNeedAttention: "Websites benötigen Aufmerksamkeit",
+                requiresAction: "Maßnahme erforderlich",
+                totalAudits: "Gesamtaudits diesen Monat",
+                viewAll: "Alle anzeigen",
+                yourWebsites: "Ihre Websites",
+                viewAllSites: "Alle anzeigen (12)",
+                overall: "Gesamt",
+                lastAudit: "Letztes Audit: vor 2 Std.",
+                lastAuditYesterday: "Letztes Audit: Gestern",
+                lastAudit3d: "Letztes Audit: vor 3 T.",
+                lastAudit5d: "Letztes Audit: vor 5 T.",
+                lastAudit1w: "Letztes Audit: vor 1 W.",
+                lastAudit4h: "Letztes Audit: vor 4 Std.",
+                viewDetails: "Details anzeigen",
+                startAudit: "Audit starten",
+                topRecommendations: "Top-Empfehlungen",
+                aiSuggested: "Von KI vorgeschlagene Maßnahmen zur Verbesserung Ihrer Bewertungen",
+                priority: "3 Priorität",
+                optimizeImages: "Bilder auf TechStart.io optimieren",
+                compressImages: "12 große Bilder komprimieren, um 2,4s Ladezeit zu sparen",
+                minifyCSS: "CSS auf Fashion Store minimieren",
+                reduceStylesheet: "Stylesheet-Größe um 45KB reduzieren",
+                addAltText: "Alt-Text zu Photo Portfolio hinzufügen",
+                missingAlt: "18 Bilder ohne Barrierefreiheitsbeschreibungen",
+                sitesNeedingAttention: "Websites benötigen Aufmerksamkeit",
+                critical: "Kritisch",
+                warning: "Warnung",
+                monitor: "Überwachen",
+                performance: "Leistung",
+                accessibility: "Barrierefreiheit",
+                viewSite: "Website anzeigen",
+                configureAlerts: "Benachrichtigungen konfigurieren",
+                performanceTrends: "Leistungstrends",
+                avgScoresAllSites: "Durchschnittliche Bewertungen aller Websites",
+                last30Days: "Letzte 30 Tage",
+                last7Days: "Letzte 7 Tage",
+                last90Days: "Letzte 90 Tage",
+                allRights: "Alle Rechte vorbehalten.",
+                privacyPolicy: "Datenschutz",
+                termsOfService: "Nutzungsbedingungen",
+                support: "Support",
+                addNewSiteTitle: "Neue Website hinzufügen",
+                startTracking: "Beginnen Sie mit der Verfolgung der Leistung Ihrer Website",
+                siteNameLabel: "Website-Name (Spitzname)",
+                siteNamePlaceholder: "z.B. Mein persönlicher Blog",
+                siteUrlLabel: "Website-URL",
+                siteUrlPlaceholder: "www.meine-website.com",
+                runFirstAudit: "Erstes Audit automatisch ausführen",
+                addSiteBtn: "Website hinzufügen"
+            },
+            it: {
+                welcome: "Bentornato, Sophie 👋",
+                overview: "Ecco una panoramica della salute del tuo sito web oggi.",
+                addNewSite: "Aggiungi nuovo sito",
+                export: "Esporta",
+                searchPlaceholder: "Cerca per nome o soprannome...",
+                pillars: "Pilastri",
+                score: "Punteggio",
+                date: "Data",
+                sortBy: "Ordina per:",
+                lastActivity: "Ultima attività",
+                overallScore: "Punteggio complessivo",
+                nameAZ: "Nome (A-Z)",
+                dateAdded: "Data aggiunta",
+                thisWeek: "+2 questa settimana",
+                activeSites: "Siti attivi",
+                avgScore: "Punteggio medio complessivo",
+                sitesNeedAttention: "Siti che necessitano attenzione",
+                requiresAction: "Richiede azione",
+                totalAudits: "Audit totali questo mese",
+                viewAll: "Visualizza tutto",
+                yourWebsites: "I tuoi siti web",
+                viewAllSites: "Visualizza tutto (12)",
+                overall: "Complessivo",
+                lastAudit: "Ultimo audit: 2 ore fa",
+                lastAuditYesterday: "Ultimo audit: Ieri",
+                lastAudit3d: "Ultimo audit: 3 giorni fa",
+                lastAudit5d: "Ultimo audit: 5 giorni fa",
+                lastAudit1w: "Ultimo audit: 1 sett. fa",
+                lastAudit4h: "Ultimo audit: 4 ore fa",
+                viewDetails: "Visualizza dettagli",
+                startAudit: "Avvia audit",
+                topRecommendations: "Raccomandazioni principali",
+                aiSuggested: "Azioni suggerite dall'IA per migliorare i tuoi punteggi",
+                priority: "3 Priorità",
+                optimizeImages: "Ottimizza immagini su TechStart.io",
+                compressImages: "Comprimi 12 immagini grandi per risparmiare 2,4s di caricamento",
+                minifyCSS: "Minimizza CSS su Fashion Store",
+                reduceStylesheet: "Riduci dimensione foglio di stile di 45KB",
+                addAltText: "Aggiungi testo alt a Photo Portfolio",
+                missingAlt: "18 immagini senza descrizioni di accessibilità",
+                sitesNeedingAttention: "Siti che necessitano attenzione",
+                critical: "Critico",
+                warning: "Avviso",
+                monitor: "Monitora",
+                performance: "Prestazioni",
+                accessibility: "Accessibilità",
+                viewSite: "Visualizza sito",
+                configureAlerts: "Configura avvisi",
+                performanceTrends: "Tendenze prestazioni",
+                avgScoresAllSites: "Punteggi medi su tutti i siti",
+                last30Days: "Ultimi 30 giorni",
+                last7Days: "Ultimi 7 giorni",
+                last90Days: "Ultimi 90 giorni",
+                allRights: "Tutti i diritti riservati.",
+                privacyPolicy: "Privacy",
+                termsOfService: "Termini di servizio",
+                support: "Supporto",
+                addNewSiteTitle: "Aggiungi nuovo sito",
+                startTracking: "Inizia a monitorare le prestazioni del tuo sito web",
+                siteNameLabel: "Nome sito (soprannome)",
+                siteNamePlaceholder: "es. Il mio blog personale",
+                siteUrlLabel: "URL sito",
+                siteUrlPlaceholder: "www.mio-sito.com",
+                runFirstAudit: "Esegui primo audit automaticamente",
+                addSiteBtn: "Aggiungi sito"
+            },
+            en: {
+                welcome: "Welcome back, Sophie 👋",
+                overview: "Here's an overview of your website health today.",
+                addNewSite: "Add New Site",
+                export: "Export",
+                searchPlaceholder: "Search by name or nickname...",
+                pillars: "Pillars",
+                score: "Score",
+                date: "Date",
+                sortBy: "Sort by:",
+                lastActivity: "Last Activity",
+                overallScore: "Overall Score",
+                nameAZ: "Name (A-Z)",
+                dateAdded: "Date Added",
+                thisWeek: "+2 this week",
+                activeSites: "Active Sites",
+                avgScore: "Average Overall Score",
+                sitesNeedAttention: "Sites Needing Attention",
+                requiresAction: "Requires action",
+                totalAudits: "Total Audits This Month",
+                viewAll: "View all",
+                yourWebsites: "Your Websites",
+                viewAllSites: "View all (12)",
+                overall: "Overall",
+                lastAudit: "Last audit: 2h ago",
+                lastAuditYesterday: "Last audit: Yesterday",
+                lastAudit3d: "Last audit: 3d ago",
+                lastAudit5d: "Last audit: 5d ago",
+                lastAudit1w: "Last audit: 1w ago",
+                lastAudit4h: "Last audit: 4h ago",
+                viewDetails: "View details",
+                startAudit: "Start audit",
+                topRecommendations: "Top Recommendations",
+                aiSuggested: "AI-suggested actions to improve your scores",
+                priority: "3 Priority",
+                optimizeImages: "Optimize images on TechStart.io",
+                compressImages: "Compress 12 large images to save 2.4s load time",
+                minifyCSS: "Minify CSS on Fashion Store",
+                reduceStylesheet: "Reduce stylesheet size by 45KB",
+                addAltText: "Add alt text to Photo Portfolio",
+                missingAlt: "18 images missing accessibility descriptions",
+                sitesNeedingAttention: "Sites Needing Attention",
+                critical: "Critical",
+                warning: "Warning",
+                monitor: "Monitor",
+                performance: "Performance",
+                accessibility: "Accessibility",
+                viewSite: "View site",
+                configureAlerts: "Configure alerts",
+                performanceTrends: "Performance Trends",
+                avgScoresAllSites: "Average scores across all sites",
+                last30Days: "Last 30 days",
+                last7Days: "Last 7 days",
+                last90Days: "Last 90 days",
+                allRights: "All rights reserved.",
+                privacyPolicy: "Privacy Policy",
+                termsOfService: "Terms of Service",
+                support: "Support",
+                addNewSiteTitle: "Add New Site",
+                startTracking: "Start tracking your website's performance",
+                siteNameLabel: "Site Name (Nickname)",
+                siteNamePlaceholder: "e.g., My Personal Blog",
+                siteUrlLabel: "Site URL",
+                siteUrlPlaceholder: "www.my-site.com",
+                runFirstAudit: "Run first audit automatically",
+                addSiteBtn: "Add Site"
+            }
+        };
+
+        let currentLanguage = 'fr';
+
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLang(lang) {
+            currentLanguage = lang;
+            
+            document.querySelectorAll('[id^="check"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('check' + lang.charAt(0).toUpperCase() + lang.slice(1)).classList.remove('hidden');
+            
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+            
+            document.querySelectorAll('select option[data-i18n]').forEach(option => {
+                const key = option.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    option.textContent = translations[lang][key];
+                }
+            });
+            
+            toggleLangDropdown();
+        }
+
+        document.addEventListener('click', function(e) {
+            const langSelector = document.getElementById('langSelector');
+            const langDropdown = document.getElementById('langDropdown');
+            
+            if (!langSelector.contains(e.target) && !langDropdown.contains(e.target)) {
+                langDropdown.classList.remove('show');
+            }
+        });
+
+        function openAddSiteModal() {
+            const modal = document.getElementById('addSiteModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddSiteModal() {
+            const modal = document.getElementById('addSiteModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            document.getElementById('addSiteForm').reset();
+        }
+
+        function handleAddSite(e) {
+            e.preventDefault();
+            
+            const siteName = document.getElementById('siteName').value;
+            const siteUrl = document.getElementById('siteUrl').value;
+            
+            closeAddSiteModal();
+            
+            setTimeout(() => {
+                alert('Site added successfully! Redirecting to site overview...');
+            }, 300);
+        }
+
+        const searchInput = document.getElementById('searchSites');
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const siteCards = document.querySelectorAll('#sitesGrid > div');
+            
+            siteCards.forEach(card => {
+                const siteName = card.querySelector('h3').textContent.toLowerCase();
+                const siteUrl = card.querySelector('.text-slate-400').textContent.toLowerCase();
+                
+                if (siteName.includes(searchTerm) || siteUrl.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        window.addEventListener('load', function() {
+            try {
+                const trace1 = {
+                    x: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    y: [82, 85, 84, 88],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Performance',
+                    line: { color: '#818CF8', width: 3 },
+                    marker: { color: '#818CF8', size: 8 }
+                };
+
+                const trace2 = {
+                    x: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    y: [75, 78, 82, 85],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Accessibility',
+                    line: { color: '#34D399', width: 3 },
+                    marker: { color: '#34D399', size: 8 }
+                };
+
+                const trace3 = {
+                    x: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    y: [88, 89, 91, 92],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'SEO',
+                    line: { color: '#FB7185', width: 3 },
+                    marker: { color: '#FB7185', size: 8 }
+                };
+
+                const layout = {
+                    margin: { t: 20, r: 20, b: 50, l: 50 },
+                    showlegend: true,
+                    legend: {
+                        orientation: 'h',
+                        x: 0.5,
+                        xanchor: 'center',
+                        y: -0.2
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    xaxis: {
+                        showgrid: false,
+                        color: '#94a3b8'
+                    },
+                    yaxis: {
+                        gridcolor: '#f1f5f9',
+                        color: '#94a3b8',
+                        range: [60, 100]
+                    },
+                    hovermode: 'closest'
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: false,
+                    displaylogo: false
+                };
+
+                Plotly.newPlot('trendChart', [trace1, trace2, trace3], layout, config);
+
+                setTimeout(() => {
+                    const bars = document.querySelectorAll('.progress-bar-fill');
+                    bars.forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => {
+                            bar.style.width = width;
+                        }, 100);
+                    });
+                }, 500);
+
+            } catch(e) {
+                console.log("Chart initialization error", e);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddSiteModal();
+            }
+        });
+    </script>
+
+</body>
+</html>

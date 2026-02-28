@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Comparison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .tile-hover { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
+        .tile-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(99, 102, 241, 0.15); }
+        
+        .btn-scale { transition: transform 0.1s ease; }
+        .btn-scale:active { transform: scale(0.95); }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .lang-dropdown.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#64748B',
+                            blue: '#818CF8',
+                            mint: '#34D399',
+                            coral: '#FB7185',
+                            lavender: '#A5B4FC'
+                        },
+                        pastel: {
+                            bg: '#F8FAFC',
+                            surface: '#FFFFFF',
+                            blueLight: '#E0E7FF',
+                            mintLight: '#D1FAE5',
+                            coralLight: '#FFE4E6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-pastel-bg text-slate-700 overflow-hidden" style="width: 1440px; margin: 0 auto;">
+
+    <header id="header" class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 cursor-pointer">
+                <div class="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-coral rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-500">Tactik</span>
+            </div>
+            
+            <nav class="hidden lg:flex items-center gap-1 ml-8">
+                <a href="#dashboard" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Dashboard</a>
+                <a href="#site-overview" class="px-4 py-2 text-brand-blue font-semibold bg-blue-50 rounded-lg transition-colors">Site Overview</a>
+                <a href="#new-audit" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">New Audit</a>
+                <a href="#audit-details" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Audit Details</a>
+                <a href="#audit-comparison" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Audit Comparison</a>
+                <a href="#settings" class="px-4 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">Settings</a>
+            </nav>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <button class="relative p-2.5 text-slate-400 hover:text-brand-coral transition-colors">
+                <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-brand-coral rounded-full border-2 border-white animate-pulse"></span>
+            </button>
+            
+            <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+            
+            <div class="relative">
+                <button id="langSelector" onclick="toggleLangDropdown()" class="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
+                    <i class="fa-solid fa-globe text-sm"></i>
+                    <span id="currentLang" class="text-sm font-semibold">FR</span>
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                
+                <div id="langDropdown" class="lang-dropdown bg-white rounded-xl shadow-lg border border-slate-200 py-2 w-40 z-50">
+                    <button onclick="changeLang('fr')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Français</span>
+                        <span id="checkFr" class="text-brand-blue"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('de')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Deutsch</span>
+                        <span id="checkDe" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('it')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>Italiano</span>
+                        <span id="checkIt" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button onclick="changeLang('en')" class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                        <span>English</span>
+                        <span id="checkEn" class="text-brand-blue hidden"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 cursor-pointer p-1.5 pr-4 hover:bg-slate-50 rounded-full transition-colors">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-mint to-brand-blue p-[2px]">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Avatar" class="w-full h-full rounded-full object-cover border-2 border-white">
+                </div>
+                <div class="text-left">
+                    <p class="text-sm font-bold text-slate-700">Sophie Martin</p>
+                    <p class="text-xs text-slate-400">Admin</p>
+                </div>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-[calc(1024px-80px)]">
+        <main class="flex-1 overflow-y-auto p-8">
+            
+            <section id="comparison-header-section" class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <button onclick="window.location.href='#site-overview'" class="w-10 h-10 rounded-xl bg-white border border-slate-200 hover:border-brand-blue hover:bg-blue-50 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-arrow-left text-slate-600"></i>
+                            </button>
+                            <h1 class="text-3xl font-extrabold text-slate-800" data-i18n="compareAudits">Comparer les audits</h1>
+                        </div>
+                        <div class="flex items-center gap-4 ml-14">
+                            <p class="text-slate-900 font-bold">E-Commerce Store</p>
+                            <span class="text-slate-300">•</span>
+                            <p class="text-slate-500 text-sm">www.mystore.com</p>
+                            <span class="text-slate-300">•</span>
+                            <p class="text-slate-400 text-sm" data-i18n="selectAuditsDesc">Sélectionnez les audits à comparer côte à côte</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="btn-scale px-6 py-3 bg-white border border-slate-200 hover:border-brand-blue text-slate-700 font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-file-export"></i>
+                            <span data-i18n="exportComparison">Exporter la comparaison</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="audit-selection-section" class="mb-8">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 mb-1" data-i18n="selectAuditsTitle">Sélectionner les audits à comparer</h2>
+                            <p class="text-sm text-slate-500" data-i18n="selectAuditsSubtitle">Choisissez 2 audits ou plus dans la liste ci-dessous</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-slate-500"><span data-i18n="selected">Sélectionné</span>: <span id="selected-count" class="font-bold text-brand-blue">0</span></span>
+                            <button onclick="clearSelection()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-red-600 transition-colors">
+                                <span data-i18n="clearAll">Tout effacer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="audit-card tile-hover bg-white rounded-xl border-2 border-slate-200 p-5 cursor-pointer" onclick="toggleAuditSelection(this)" data-audit-id="1">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">26 janvier 2026</p>
+                                        <p class="text-xs text-slate-500">17:30</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center audit-checkbox">
+                                    <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-3xl font-bold text-slate-800">91</span>
+                                <div class="flex items-center gap-1 bg-pastel-mintLight text-brand-mint px-2 py-0.5 rounded-full">
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <span class="text-xs font-bold">+3</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-blueLight text-brand-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-universal-access"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-orange-100 text-orange-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-leaf"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-card tile-hover bg-white rounded-xl border-2 border-slate-200 p-5 cursor-pointer" onclick="toggleAuditSelection(this)" data-audit-id="2">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-brand-blue flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">19 janvier 2026</p>
+                                        <p class="text-xs text-slate-500">14:15</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center audit-checkbox">
+                                    <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-3xl font-bold text-slate-800">88</span>
+                                <div class="flex items-center gap-1 bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                                    <span class="text-xs font-bold">±0</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-blueLight text-brand-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-universal-access"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-orange-100 text-orange-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-leaf"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-card tile-hover bg-white rounded-xl border-2 border-slate-200 p-5 cursor-pointer" onclick="toggleAuditSelection(this)" data-audit-id="3">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">12 janvier 2026</p>
+                                        <p class="text-xs text-slate-500">10:45</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center audit-checkbox">
+                                    <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-3xl font-bold text-slate-800">85</span>
+                                <div class="flex items-center gap-1 bg-pastel-coralLight text-brand-coral px-2 py-0.5 rounded-full">
+                                    <i class="fa-solid fa-arrow-down text-xs"></i>
+                                    <span class="text-xs font-bold">-2</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-blueLight text-brand-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-universal-access"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-card tile-hover bg-white rounded-xl border-2 border-slate-200 p-5 cursor-pointer" onclick="toggleAuditSelection(this)" data-audit-id="4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">5 janvier 2026</p>
+                                        <p class="text-xs text-slate-500">16:20</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center audit-checkbox">
+                                    <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-3xl font-bold text-slate-800">87</span>
+                                <div class="flex items-center gap-1 bg-pastel-mintLight text-brand-mint px-2 py-0.5 rounded-full">
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <span class="text-xs font-bold">+4</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-blueLight text-brand-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-universal-access"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-orange-100 text-orange-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-leaf"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-card tile-hover bg-white rounded-xl border-2 border-slate-200 p-5 cursor-pointer" onclick="toggleAuditSelection(this)" data-audit-id="5">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">28 décembre 2025</p>
+                                        <p class="text-xs text-slate-500">11:30</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center audit-checkbox">
+                                    <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-3xl font-bold text-slate-800">83</span>
+                                <div class="flex items-center gap-1 bg-pastel-mintLight text-brand-mint px-2 py-0.5 rounded-full">
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <span class="text-xs font-bold">+2</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-blueLight text-brand-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-universal-access"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="audit-card tile-hover bg-white rounded-xl border-2 border-slate-200 p-5 cursor-pointer" onclick="toggleAuditSelection(this)" data-audit-id="6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">20 décembre 2025</p>
+                                        <p class="text-xs text-slate-500">15:00</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center audit-checkbox">
+                                    <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-3xl font-bold text-slate-800">81</span>
+                                <div class="flex items-center gap-1 bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                                    <span class="text-xs font-bold">±0</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-blueLight text-brand-blue flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-universal-access"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-pastel-mintLight text-brand-mint flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <div class="w-7 h-7 rounded bg-orange-100 text-orange-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-leaf"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-200 flex justify-end">
+                        <button onclick="showComparison()" class="btn-scale px-8 py-3 bg-brand-blue hover:bg-indigo-600 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed" id="compare-btn" disabled>
+                            <i class="fa-solid fa-code-compare"></i>
+                            <span data-i18n="compareSelectedAudits">Comparer les audits sélectionnés</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparison-results-section" class="mb-8 hidden">
+                <div class="bg-gradient-to-br from-white to-indigo-50/30 rounded-3xl border border-slate-200 shadow-lg p-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800 mb-2" data-i18n="overallScoreComparison">Comparaison du score global</h2>
+                            <p class="text-slate-600" data-i18n="comparing2Audits">Comparaison de 2 audits sur tous les piliers</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1" data-i18n="latest">Dernier</p>
+                                <p class="text-4xl font-extrabold text-slate-800">91</p>
+                                <p class="text-xs text-slate-400 mt-1">26 jan. 2026</p>
+                            </div>
+                            <div class="flex items-center justify-center w-16">
+                                <i class="fa-solid fa-arrow-right text-2xl text-brand-blue"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1" data-i18n="previous">Précédent</p>
+                                <p class="text-4xl font-extrabold text-slate-800">88</p>
+                                <p class="text-xs text-slate-400 mt-1">19 jan. 2026</p>
+                            </div>
+                            <div class="flex items-center justify-center ml-4">
+                                <div class="bg-pastel-mintLight text-brand-mint px-6 py-3 rounded-xl">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-solid fa-arrow-up text-xl"></i>
+                                        <span class="text-3xl font-extrabold">+3</span>
+                                    </div>
+                                    <p class="text-xs font-medium mt-1" data-i18n="pointsImproved">points améliorés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-pastel-mintLight text-brand-mint flex items-center justify-center">
+                                    <i class="fa-solid fa-gauge-high text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-500 font-medium" data-i18n="performance">Performance</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl font-bold text-slate-800">94</span>
+                                        <span class="text-sm text-slate-400">vs 89</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 justify-between">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-mint rounded-full" style="width: 94%;"></div>
+                                </div>
+                                <div class="flex items-center gap-1 text-brand-mint">
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <span class="text-sm font-bold">+5</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-pastel-blueLight text-brand-blue flex items-center justify-center">
+                                    <i class="fa-solid fa-universal-access text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-500 font-medium" data-i18n="accessibility">Accessibilité</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl font-bold text-slate-800">88</span>
+                                        <span class="text-sm text-slate-400">vs 86</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 justify-between">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-blue rounded-full" style="width: 88%;"></div>
+                                </div>
+                                <div class="flex items-center gap-1 text-brand-mint">
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <span class="text-sm font-bold">+2</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-pastel-mintLight text-brand-mint flex items-center justify-center">
+                                    <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-500 font-medium">SEO</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl font-bold text-slate-800">91</span>
+                                        <span class="text-sm text-slate-400">vs 90</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 justify-between">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-mint rounded-full" style="width: 91%;"></div>
+                                </div>
+                                <div class="flex items-center gap-1 text-brand-mint">
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <span class="text-sm font-bold">+1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                                    <i class="fa-solid fa-leaf text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-500 font-medium" data-i18n="sustainability">Durabilité</p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl font-bold text-slate-800">89</span>
+                                        <span class="text-sm text-slate-400">vs 89</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 justify-between">
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div class="h-full bg-orange-500 rounded-full" style="width: 89%;"></div>
+                                </div>
+                                <div class="flex items-center gap-1 text-slate-400">
+                                    <span class="text-sm font-bold">±0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="comparisonChart" style="height: 350px;"></div>
+                </div>
+            </section>
+
+            <section id="summary-section" class="mb-8 hidden">
+                <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-brand-blue to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fa-solid fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800" data-i18n="summaryChanges">Résumé des changements</h2>
+                            <p class="text-sm text-slate-500" data-i18n="keyImprovements">Améliorations et régressions clés entre les audits</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-8 h-8 bg-pastel-mintLight rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-arrow-up text-brand-mint"></i>
+                                </div>
+                                <h3 class="font-bold text-slate-800" data-i18n="improvements">Améliorations</h3>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-start gap-3 p-4 bg-green-50/50 rounded-xl border border-green-100">
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-gauge-high text-brand-mint"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-800 text-sm mb-1" data-i18n="perfScore5">Score de performance +5 points</p>
+                                        <p class="text-xs text-slate-600" data-i18n="imageOptDesc">L'optimisation des images et la minification CSS ont réduit le temps de chargement de 1,8 seconde.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3 p-4 bg-green-50/50 rounded-xl border border-green-100">
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-universal-access text-brand-blue"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-800 text-sm mb-1" data-i18n="accessScore2">Score d'accessibilité +2 points</p>
+                                        <p class="text-xs text-slate-600" data-i18n="altTextDesc">Ajout de texte alt à 12 images et amélioration de la navigation au clavier sur les formulaires.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3 p-4 bg-green-50/50 rounded-xl border border-green-100">
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-magnifying-glass text-brand-mint"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-800 text-sm mb-1" data-i18n="seoScore1">Score SEO +1 point</p>
+                                        <p class="text-xs text-slate-600" data-i18n="metaDesc">Mise à jour des méta-descriptions sur 3 pages de destination clés.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-circle-info text-slate-500"></i>
+                                </div>
+                                <h3 class="font-bold text-slate-800" data-i18n="areasToWatch">Points à surveiller</h3>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-leaf text-orange-500"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-800 text-sm mb-1" data-i18n="sustainUnchanged">Score de durabilité inchangé</p>
+                                        <p class="text-xs text-slate-600" data-i18n="co2Desc">Le CO2 par visite reste à 0,42g. Envisagez d'optimiser davantage le poids de la page.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3 p-4 bg-blue-50/50 rounded-xl border border-blue-200">
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-lightbulb text-brand-blue"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-800 text-sm mb-1" data-i18n="potentialGains">Potentiel de gains supplémentaires</p>
+                                        <p class="text-xs text-slate-600" data-i18n="contrastDesc">Des problèmes de contraste des couleurs persistent sur 3 éléments. Les résoudre pourrait ajouter +4 points à l'accessibilité.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="next-actions-section" class="mb-8 hidden">
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-96 h-96 bg-brand-blue/20 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-64 h-64 bg-brand-mint/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                                <i class="fa-solid fa-sparkles text-2xl text-yellow-300"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold" data-i18n="recommendedActions">Actions recommandées</h2>
+                                <p class="text-slate-300" data-i18n="basedOnAnalysis">Basé sur l'analyse comparative</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors cursor-pointer">
+                                <div class="w-12 h-12 bg-brand-mint/20 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-palette text-brand-mint text-xl"></i>
+                                </div>
+                                <h3 class="font-bold text-lg mb-2" data-i18n="fixColorContrast">Corriger le contraste des couleurs</h3>
+                                <p class="text-sm text-slate-300 mb-4" data-i18n="contrastElements">3 éléments nécessitent des ajustements de contraste pour respecter les normes WCAG AA.</p>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="bg-brand-mint/20 text-brand-mint px-2 py-1 rounded font-bold">+4 points</span>
+                                    <span class="text-slate-400" data-i18n="est15min">Est. 15 min</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors cursor-pointer">
+                                <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-weight-hanging text-orange-400 text-xl"></i>
+                                </div>
+                                <h3 class="font-bold text-lg mb-2" data-i18n="reducePageWeight">Réduire le poids de la page</h3>
+                                <p class="text-sm text-slate-300 mb-4" data-i18n="compressAssets">Compressez davantage les ressources pour réduire les émissions de CO2 et améliorer la durabilité.</p>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded font-bold">+6 points</span>
+                                    <span class="text-slate-400" data-i18n="est45min">Est. 45 min</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors cursor-pointer">
+                                <div class="w-12 h-12 bg-brand-coral/20 rounded-xl flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-heading text-brand-coral text-xl"></i>
+                                </div>
+                                <h3 class="font-bold text-lg mb-2" data-i18n="enhanceMetaTags">Améliorer les balises méta</h3>
+                                <p class="text-sm text-slate-300 mb-4" data-i18n="optimizePages">Optimisez les 2 pages restantes avec des mots-clés ciblés dans les méta-descriptions.</p>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="bg-brand-coral/20 text-brand-coral px-2 py-1 rounded font-bold">+2 points</span>
+                                    <span class="text-slate-400" data-i18n="est20min">Est. 20 min</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t border-white/10 flex justify-between items-center">
+                            <p class="text-slate-300"><span data-i18n="implementing">La mise en œuvre de ces actions pourrait porter votre score à</span> <span class="text-2xl font-bold text-white">103/100</span></p>
+                            <div class="flex gap-3">
+                                <button onclick="window.location.href='#site-overview'" class="btn-scale px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 font-semibold rounded-xl transition-all">
+                                    <span data-i18n="backToSiteOverview">Retour à l'aperçu du site</span>
+                                </button>
+                                <button class="btn-scale px-6 py-3 bg-brand-mint hover:bg-green-500 text-slate-900 font-bold rounded-xl shadow-lg transition-all">
+                                    <span data-i18n="downloadActionPlan">Télécharger le plan d'action</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        const translations = {
+            fr: {
+                compareAudits: "Comparer les audits",
+                selectAuditsDesc: "Sélectionnez les audits à comparer côte à côte",
+                exportComparison: "Exporter la comparaison",
+                selectAuditsTitle: "Sélectionner les audits à comparer",
+                selectAuditsSubtitle: "Choisissez 2 audits ou plus dans la liste ci-dessous",
+                selected: "Sélectionné",
+                clearAll: "Tout effacer",
+                compareSelectedAudits: "Comparer les audits sélectionnés",
+                overallScoreComparison: "Comparaison du score global",
+                comparing2Audits: "Comparaison de 2 audits sur tous les piliers",
+                latest: "Dernier",
+                previous: "Précédent",
+                pointsImproved: "points améliorés",
+                performance: "Performance",
+                accessibility: "Accessibilité",
+                sustainability: "Durabilité",
+                summaryChanges: "Résumé des changements",
+                keyImprovements: "Améliorations et régressions clés entre les audits",
+                improvements: "Améliorations",
+                perfScore5: "Score de performance +5 points",
+                imageOptDesc: "L'optimisation des images et la minification CSS ont réduit le temps de chargement de 1,8 seconde.",
+                accessScore2: "Score d'accessibilité +2 points",
+                altTextDesc: "Ajout de texte alt à 12 images et amélioration de la navigation au clavier sur les formulaires.",
+                seoScore1: "Score SEO +1 point",
+                metaDesc: "Mise à jour des méta-descriptions sur 3 pages de destination clés.",
+                areasToWatch: "Points à surveiller",
+                sustainUnchanged: "Score de durabilité inchangé",
+                co2Desc: "Le CO2 par visite reste à 0,42g. Envisagez d'optimiser davantage le poids de la page.",
+                potentialGains: "Potentiel de gains supplémentaires",
+                contrastDesc: "Des problèmes de contraste des couleurs persistent sur 3 éléments. Les résoudre pourrait ajouter +4 points à l'accessibilité.",
+                recommendedActions: "Actions recommandées",
+                basedOnAnalysis: "Basé sur l'analyse comparative",
+                fixColorContrast: "Corriger le contraste des couleurs",
+                contrastElements: "3 éléments nécessitent des ajustements de contraste pour respecter les normes WCAG AA.",
+                est15min: "Est. 15 min",
+                reducePageWeight: "Réduire le poids de la page",
+                compressAssets: "Compressez davantage les ressources pour réduire les émissions de CO2 et améliorer la durabilité.",
+                est45min: "Est. 45 min",
+                enhanceMetaTags: "Améliorer les balises méta",
+                optimizePages: "Optimisez les 2 pages restantes avec des mots-clés ciblés dans les méta-descriptions.",
+                est20min: "Est. 20 min",
+                implementing: "La mise en œuvre de ces actions pourrait porter votre score à",
+                backToSiteOverview: "Retour à l'aperçu du site",
+                downloadActionPlan: "Télécharger le plan d'action"
+            },
+            de: {
+                compareAudits: "Audits vergleichen",
+                selectAuditsDesc: "Wählen Sie Audits zum Vergleichen aus",
+                exportComparison: "Vergleich exportieren",
+                selectAuditsTitle: "Audits zum Vergleichen auswählen",
+                selectAuditsSubtitle: "Wählen Sie 2 oder mehr Audits aus der Liste unten",
+                selected: "Ausgewählt",
+                clearAll: "Alle löschen",
+                compareSelectedAudits: "Ausgewählte Audits vergleichen",
+                overallScoreComparison: "Gesamtbewertungsvergleich",
+                comparing2Audits: "Vergleich von 2 Audits über alle Säulen",
+                latest: "Neueste",
+                previous: "Vorherige",
+                pointsImproved: "Punkte verbessert",
+                performance: "Leistung",
+                accessibility: "Barrierefreiheit",
+                sustainability: "Nachhaltigkeit",
+                summaryChanges: "Zusammenfassung der Änderungen",
+                keyImprovements: "Wichtige Verbesserungen und Rückschritte zwischen Audits",
+                improvements: "Verbesserungen",
+                perfScore5: "Leistungsbewertung +5 Punkte",
+                imageOptDesc: "Bildoptimierung und CSS-Minimierung haben die Ladezeit um 1,8 Sekunden reduziert.",
+                accessScore2: "Barrierefreiheitsbewertung +2 Punkte",
+                altTextDesc: "Alt-Text zu 12 Bildern hinzugefügt und Tastaturnavigation in Formularen verbessert.",
+                seoScore1: "SEO-Bewertung +1 Punkt",
+                metaDesc: "Meta-Beschreibungen auf 3 wichtigen Landingpages aktualisiert.",
+                areasToWatch: "Bereiche zu beobachten",
+                sustainUnchanged: "Nachhaltigkeitsbewertung unverändert",
+                co2Desc: "CO2 pro Besuch bleibt bei 0,42g. Erwägen Sie weitere Optimierung des Seitengewichts.",
+                potentialGains: "Potenzial für weitere Gewinne",
+                contrastDesc: "Farbkontrastprobleme bleiben bei 3 Elementen. Diese zu beheben könnte +4 Punkte zur Barrierefreiheit hinzufügen.",
+                recommendedActions: "Empfohlene Maßnahmen",
+                basedOnAnalysis: "Basierend auf vergleichender Analyse",
+                fixColorContrast: "Farbkontrast korrigieren",
+                contrastElements: "3 Elemente benötigen Kontrastanpassungen, um WCAG AA-Standards zu erfüllen.",
+                est15min: "Ca. 15 Min.",
+                reducePageWeight: "Seitengewicht reduzieren",
+                compressAssets: "Komprimieren Sie Assets weiter, um CO2-Emissionen zu senken und Nachhaltigkeit zu verbessern.",
+                est45min: "Ca. 45 Min.",
+                enhanceMetaTags: "Meta-Tags verbessern",
+                optimizePages: "Optimieren Sie die verbleibenden 2 Seiten mit gezielten Keywords in Meta-Beschreibungen.",
+                est20min: "Ca. 20 Min.",
+                implementing: "Die Umsetzung dieser Maßnahmen könnte Ihre Bewertung auf",
+                backToSiteOverview: "Zurück zur Website-Übersicht",
+                downloadActionPlan: "Aktionsplan herunterladen"
+            },
+            it: {
+                compareAudits: "Confronta audit",
+                selectAuditsDesc: "Seleziona gli audit da confrontare fianco a fianco",
+                exportComparison: "Esporta confronto",
+                selectAuditsTitle: "Seleziona audit da confrontare",
+                selectAuditsSubtitle: "Scegli 2 o più audit dall'elenco sottostante",
+                selected: "Selezionato",
+                clearAll: "Cancella tutto",
+                compareSelectedAudits: "Confronta audit selezionati",
+                overallScoreComparison: "Confronto punteggio complessivo",
+                comparing2Audits: "Confronto di 2 audit su tutti i pilastri",
+                latest: "Ultimo",
+                previous: "Precedente",
+                pointsImproved: "punti migliorati",
+                performance: "Prestazioni",
+                accessibility: "Accessibilità",
+                sustainability: "Sostenibilità",
+                summaryChanges: "Riepilogo modifiche",
+                keyImprovements: "Miglioramenti e regressioni chiave tra gli audit",
+                improvements: "Miglioramenti",
+                perfScore5: "Punteggio prestazioni +5 punti",
+                imageOptDesc: "L'ottimizzazione delle immagini e la minimizzazione CSS hanno ridotto il tempo di caricamento di 1,8 secondi.",
+                accessScore2: "Punteggio accessibilità +2 punti",
+                altTextDesc: "Aggiunto testo alt a 12 immagini e migliorata la navigazione da tastiera sui moduli.",
+                seoScore1: "Punteggio SEO +1 punto",
+                metaDesc: "Aggiornate le meta descrizioni su 3 pagine di destinazione chiave.",
+                areasToWatch: "Aree da monitorare",
+                sustainUnchanged: "Punteggio sostenibilità invariato",
+                co2Desc: "Il CO2 per visita rimane a 0,42g. Considera di ottimizzare ulteriormente il peso della pagina.",
+                potentialGains: "Potenziale per ulteriori guadagni",
+                contrastDesc: "Problemi di contrasto colore rimangono su 3 elementi. Risolverli potrebbe aggiungere +4 punti all'accessibilità.",
+                recommendedActions: "Azioni consigliate",
+                basedOnAnalysis: "Basato sull'analisi comparativa",
+                fixColorContrast: "Correggere contrasto colore",
+                contrastElements: "3 elementi necessitano di regolazioni di contrasto per soddisfare gli standard WCAG AA.",
+                est15min: "Stim. 15 min",
+                reducePageWeight: "Ridurre peso pagina",
+                compressAssets: "Comprimi ulteriormente le risorse per ridurre le emissioni di CO2 e migliorare la sostenibilità.",
+                est45min: "Stim. 45 min",
+                enhanceMetaTags: "Migliorare meta tag",
+                optimizePages: "Ottimizza le 2 pagine rimanenti con parole chiave mirate nelle meta descrizioni.",
+                est20min: "Stim. 20 min",
+                implementing: "L'implementazione di queste azioni potrebbe portare il tuo punteggio a",
+                backToSiteOverview: "Torna alla panoramica del sito",
+                downloadActionPlan: "Scarica piano d'azione"
+            },
+            en: {
+                compareAudits: "Compare Audits",
+                selectAuditsDesc: "Select audits to compare side by side",
+                exportComparison: "Export Comparison",
+                selectAuditsTitle: "Select Audits to Compare",
+                selectAuditsSubtitle: "Choose 2 or more audits from the list below",
+                selected: "Selected",
+                clearAll: "Clear All",
+                compareSelectedAudits: "Compare Selected Audits",
+                overallScoreComparison: "Overall Score Comparison",
+                comparing2Audits: "Comparing 2 audits across all pillars",
+                latest: "Latest",
+                previous: "Previous",
+                pointsImproved: "points improved",
+                performance: "Performance",
+                accessibility: "Accessibility",
+                sustainability: "Sustainability",
+                summaryChanges: "Summary of Changes",
+                keyImprovements: "Key improvements and regressions between audits",
+                improvements: "Improvements",
+                perfScore5: "Performance Score +5 points",
+                imageOptDesc: "Image optimization and CSS minification reduced page load time by 1.8 seconds.",
+                accessScore2: "Accessibility Score +2 points",
+                altTextDesc: "Added alt text to 12 images and improved keyboard navigation on forms.",
+                seoScore1: "SEO Score +1 point",
+                metaDesc: "Updated meta descriptions on 3 key landing pages.",
+                areasToWatch: "Areas to Watch",
+                sustainUnchanged: "Sustainability Score unchanged",
+                co2Desc: "CO2 per visit remains at 0.42g. Consider further optimizing page weight.",
+                potentialGains: "Potential for Further Gains",
+                contrastDesc: "Color contrast issues remain on 3 elements. Addressing these could add +4 points to accessibility.",
+                recommendedActions: "Recommended Next Actions",
+                basedOnAnalysis: "Based on comparison analysis",
+                fixColorContrast: "Fix Color Contrast",
+                contrastElements: "3 elements need contrast adjustments to meet WCAG AA standards.",
+                est15min: "Est. 15 min",
+                reducePageWeight: "Reduce Page Weight",
+                compressAssets: "Further compress assets to lower CO2 emissions and improve sustainability.",
+                est45min: "Est. 45 min",
+                enhanceMetaTags: "Enhance Meta Tags",
+                optimizePages: "Optimize remaining 2 pages with targeted keywords in meta descriptions.",
+                est20min: "Est. 20 min",
+                implementing: "Implementing these actions could bring your score to",
+                backToSiteOverview: "Back to Site Overview",
+                downloadActionPlan: "Download Action Plan"
+            }
+        };
+
+        let currentLanguage = 'fr';
+        let selectedAudits = [];
+
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLang(lang) {
+            currentLanguage = lang;
+            
+            document.querySelectorAll('[id^="check"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('check' + lang.charAt(0).toUpperCase() + lang.slice(1)).classList.remove('hidden');
+            
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            toggleLangDropdown();
+        }
+
+        document.addEventListener('click', function(e) {
+            const langSelector = document.getElementById('langSelector');
+            const langDropdown = document.getElementById('langDropdown');
+            
+            if (!langSelector.contains(e.target) && !langDropdown.contains(e.target)) {
+                langDropdown.classList.remove('show');
+            }
+        });
+
+        function toggleAuditSelection(card) {
+            const auditId = card.dataset.auditId;
+            const checkbox = card.querySelector('.audit-checkbox');
+            const checkIcon = checkbox.querySelector('i');
+            
+            if (selectedAudits.includes(auditId)) {
+                selectedAudits = selectedAudits.filter(id => id !== auditId);
+                card.classList.remove('border-brand-blue', 'bg-blue-50/30');
+                card.classList.add('border-slate-200');
+                checkbox.classList.remove('bg-brand-blue', 'border-brand-blue');
+                checkbox.classList.add('border-slate-300');
+                checkIcon.classList.add('hidden');
+            } else {
+                selectedAudits.push(auditId);
+                card.classList.add('border-brand-blue', 'bg-blue-50/30');
+                card.classList.remove('border-slate-200');
+                checkbox.classList.add('bg-brand-blue', 'border-brand-blue');
+                checkbox.classList.remove('border-slate-300');
+                checkIcon.classList.remove('hidden');
+            }
+            
+            document.getElementById('selected-count').textContent = selectedAudits.length;
+            
+            const compareBtn = document.getElementById('compare-btn');
+            if (selectedAudits.length >= 2) {
+                compareBtn.disabled = false;
+            } else {
+                compareBtn.disabled = true;
+            }
+        }
+
+        function clearSelection() {
+            selectedAudits = [];
+            document.querySelectorAll('.audit-card').forEach(card => {
+                card.classList.remove('border-brand-blue', 'bg-blue-50/30');
+                card.classList.add('border-slate-200');
+                const checkbox = card.querySelector('.audit-checkbox');
+                checkbox.classList.remove('bg-brand-blue', 'border-brand-blue');
+                checkbox.classList.add('border-slate-300');
+                checkbox.querySelector('i').classList.add('hidden');
+            });
+            document.getElementById('selected-count').textContent = '0';
+            document.getElementById('compare-btn').disabled = true;
+        }
+
+        function showComparison() {
+            if (selectedAudits.length >= 2) {
+                document.getElementById('comparison-results-section').classList.remove('hidden');
+                document.getElementById('summary-section').classList.remove('hidden');
+                document.getElementById('next-actions-section').classList.remove('hidden');
+                
+                setTimeout(() => {
+                    initializeComparisonChart();
+                }, 300);
+                
+                document.getElementById('comparison-results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function initializeComparisonChart() {
+            try {
+                const trace1 = {
+                    x: ['Performance', 'Accessibilité', 'SEO', 'Durabilité'],
+                    y: [94, 88, 91, 89],
+                    type: 'bar',
+                    name: '26 jan. 2026',
+                    marker: { color: '#818CF8' }
+                };
+
+                const trace2 = {
+                    x: ['Performance', 'Accessibilité', 'SEO', 'Durabilité'],
+                    y: [89, 86, 90, 89],
+                    type: 'bar',
+                    name: '19 jan. 2026',
+                    marker: { color: '#CBD5E1' }
+                };
+
+                const layout = {
+                    title: { text: 'Comparaison des scores par pilier', font: { size: 18, family: 'Plus Jakarta Sans' } },
+                    xaxis: { title: 'Pilier' },
+                    yaxis: { title: 'Score', range: [0, 100] },
+                    margin: { t: 50, r: 30, b: 60, l: 60 },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    barmode: 'group',
+                    showlegend: true,
+                    legend: { x: 0, y: 1.1, orientation: 'h' }
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: false,
+                    displaylogo: false
+                };
+
+                Plotly.newPlot('comparisonChart', [trace1, trace2], layout, config);
+            } catch(e) {
+                console.log("Chart initialization error", e);
+            }
+        }
+    </script>
+
+</body>
+</html>
